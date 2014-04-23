@@ -1,4 +1,9 @@
-"use strict"
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+function zeros(rows, columns) {
+
+}
+
+
 
 function Minimizer(model, data, initialParams, options) {
   var self = this;
@@ -22,43 +27,40 @@ function Minimizer(model, data, initialParams, options) {
     }
   }
 
-  this.residuals = function(params) {
+  self.residuals = function(params) {
     var resid =[];
     for (var i=0; i<self.xvals.length; i++) {
-      val = Math.pow(self.yvals[i] - self.model(self.xvals[i], params), 2);
+      val = Math.pow(y[i] - self.model(self.xvals[i], params), 2);
       resid.push(val);
     }
     return resid;
   };
 
-  this.jacobian = function(params) {
-    var h, 
+  self.jacobian = function(params) {
+    var h = [], 
         fjac = numeric.rep([self.npars,self.xvals.length],0),
-        upper, lower, 
-        upper_params = [], 
-        lower_params = [];
-    console.log(upper_params, lower_params)
+        upper, lower;
+    //calculate step size
     for (var i=0; i<params.length; i++) {
       h = params[i] * self.epsilon;
-      params[i] = params[i] + h
       for (var j=0; j<self.xvals.length; j++) {
-        // upper = self.model(self.xvals[j], upper_params);
-        // lower = self.model(self.xvals[j], lower_params);
-        var val = self.model(self.xvals[j], params);
-        // console.log(upper, lower, h)
-        // fjac[i][j] = 0.5*(upper-lower) / h;
-        fjac[i][j] = 1.0
+        upper = self.model(self.xvals[j], params+h);
+        lower = self.model(self.xvals[j], params-h);
+        console.log(upper, lower, self.model(self.xvals[j], params+h))
+        fjac[i][j] = 0.5*(upper-lower) / h;
       }
     }
     console.log(fjac)
     return fjac;
   };
 
-  this.iterate = function (params) {
+  self.iterate = function (params) {
     //newParams = oldParams + (Jt * J)^-1 * Jt * residuals
     var jac = self.jacobian(params);
     var jacTrans = numeric.transpose(jac);
     var step1, step2, step3, newParams;
+
+    console.log(jac, jacTrans)
 
     step1 = numeric.inv(numeric.dot(jacTrans, jac));
     step2 = numeric.dot(step1, jacTrans);
@@ -69,7 +71,7 @@ function Minimizer(model, data, initialParams, options) {
   };
 
 
-  this.fit = function() {
+  self.fit = function() {
     var iterationNumber = 0, 
         paramEstimate = self.params;
 
@@ -79,3 +81,5 @@ function Minimizer(model, data, initialParams, options) {
     }
   };
 }
+
+},{}]},{},[1])
