@@ -13,13 +13,13 @@ function linear(x, params) {
 
 
 var data = [
-        [1, 2, 3, 4, 5], 
-        [1, 2.1, 3.2, 4.0, 5.3]
+        [1, 2, 3, 4, 5, 6, 7, 8],
+        [8.3, 11.0, 14.7, 19.7, 26.7, 35.2, 44.4, 55.9]
        ];
 
-var p0 = [1.1, 0.1];
+var p0 = [6.0, 0.3];
 
-var minimizer = new Minimizer(linear, data, p0, {'debug': true, parInfo: [1, 2]});
+var minimizer = new Minimizer(exponential, data, p0, {'debug': true, parInfo: [{'name': 'A'}, {'name': 'k'}] });
 var start = new Date().getTime();
 var fit = minimizer.fit();
 var end = new Date().getTime();

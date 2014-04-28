@@ -13,7 +13,8 @@ function Minimizer(model, data, initialParams, options) {
   var defaultOptions = {
     maxIterations: 100, 
     debug: false,
-    ftol :1e-10
+    ftol :1e-10, 
+    chart: false,
   };
 
   self.fitterOptions = defaultOptions;
@@ -23,7 +24,7 @@ function Minimizer(model, data, initialParams, options) {
     }
   }
 
-  //Make sure that parInfo, if it cam through, is the same length as the 
+  //Make sure that parInfo, if it came through, is the same length as the 
   //parameter array
   if (self.fitterOptions.parInfo) {
     if (self.fitterOptions.parInfo.length !== self.npars) {
@@ -67,8 +68,10 @@ function Minimizer(model, data, initialParams, options) {
 
     for (var i=0; i<params.length; i++) {
       modParams = params.slice(0);
-      h = params[i] * self.epsilon;
+      //Scale the step to the size of the paramter
+      h = Math.abs(params[i] * self.epsilon);
       modParams[i] = params[i] + h;
+      console.log("h", h)
       for (var j=0; j<self.xvals.length; j++) {
         var val1 = self.model(self.xvals[j], modParams);
         var val2 = self.model(self.xvals[j], params);
@@ -83,28 +86,28 @@ function Minimizer(model, data, initialParams, options) {
   };
 
   this.iterate = function (params) {
+    //l-m algorithm 
     //newParams = oldParams - [Jt•J - lam*diag(Jt•J)]^-1 • Jt•R
+    //gauss-newton algorithm
+    // newParams = oldParams + (Jt•J)^-1 • Jt•R
     var jac = self.jacobian(params);
     var jacTrans = numeric.transpose(jac);
     var jtj = numeric.dot(jacTrans, jac);
+    var jtjInv = numeric.inv(jtj);
     var diag = self.diagonal(jtj);
     var step1, step2, step3, step4,
-        term2, lambda, newParams;
+        term2, lambda, newParams, oldSSR, newSSR;
 
     lambda = 0.001;
-    // console.log( numeric.prettyPrint(numeric.dot(jacTrans, jac) ))
-    term2 = numeric.mul(jtj, lambda)
-    console.log(term2)
-    step2 = numeric.inv(numeric.sub(jtj, term2))
-    console.log(step2)
-    step3 = numeric.dot(step2, jacTrans);
-    console.log(step3)
-    // console.log("step2", numeric.prettyPrint(step2))
-    step4 = numeric.dot(step3, self.residuals(params));
-    // console.log("params", numeric.prettyPrint(params))
-    // console.log("residuals", numeric.prettyPrint(self.residuals(params)))
-    // console.log("step3", numeric.prettyPrint(step3));
-    newParams = numeric.sub(params, step3);
+    oldSSR = self.ssr(params);
+    newSSR = oldSSR;
+    step1 = numeric.dot(jtjInv, jacTrans);
+    console.log("step1", numeric.prettyPrint(step1))
+    step2 = numeric.dot(step1, self.residuals(params));
+    console.log("step4", numeric.prettyPrint(step2))
+    newParams = numeric.add(params, step2);
+    newSSR = self.ssr(newParams);
+    
     return newParams;
   };
 
