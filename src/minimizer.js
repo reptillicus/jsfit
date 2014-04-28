@@ -11,7 +11,7 @@ function Minimizer(model, data, initialParams, options) {
   self.npars = initialParams.length;
 
   var defaultOptions = {
-    maxIterations: 100, 
+    maxIterations: 20, 
     debug: false,
     ftol :1e-10, 
     chart: false,
@@ -35,7 +35,7 @@ function Minimizer(model, data, initialParams, options) {
   this.residuals = function(params) {
     var resid =[];
     for (var i=0; i<self.xvals.length; i++) {
-      var val = Math.pow(self.yvals[i] - self.model(self.xvals[i], params), 2);
+      var val = self.yvals[i] - self.model(self.xvals[i], params);
       resid.push(val);
     }
     return resid;
@@ -100,6 +100,8 @@ function Minimizer(model, data, initialParams, options) {
 
     lambda = 0.001;
     oldSSR = self.ssr(params);
+    console.log("params", params)
+    console.log("residuals", numeric.prettyPrint(self.residuals(params)))
     newSSR = oldSSR;
     step1 = numeric.dot(jtjInv, jacTrans);
     console.log("step1", numeric.prettyPrint(step1))
