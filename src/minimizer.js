@@ -81,18 +81,21 @@ function Minimizer(model, data, initialParams, options) {
     var h, 
         fjac = numeric.rep([self.xvals.length, self.npars],0),
         origParams, 
-        modParams, 
+        modParamsHigh,
+        modParamsLow, 
         fjac_row = [];
 
     for (var i=0; i<params.length; i++) {
-      modParams = params.slice(0);
+      modParamsLow = params.slice(0);
+      modParamsHigh = params.slice(0);
       //Scale the step to the size of the paramter
       h = Math.abs(params[i] * self.epsilon);
-      modParams[i] = params[i] + h;
+      modParamsLow[i] = params[i] - h;
+      modParamsHigh[i] = params[i] + h;
       for (var j=0; j<self.xvals.length; j++) {
-        var val1 = self.model(self.xvals[j], modParams);
-        var val2 = self.model(self.xvals[j], params);
-        fjac[j][i] = (val1 - val2) / h;
+        var val1 = self.model(self.xvals[j], modParamsHigh);
+        var val2 = self.model(self.xvals[j], modParamsLow);
+        fjac[j][i] = (val1 - val2) / (2*h);
       }
     }
     if (self.fitterOptions.debug) {
@@ -105,7 +108,7 @@ function Minimizer(model, data, initialParams, options) {
   //perform the minimization iteratively
   this.iterate = function (params) {
     //l-m algorithm 
-    //newParams = oldParams - [Jt•J - lam*diag(Jt•J)]^-1 • Jt•R
+    //newParams = oldParams + [Jt•J - lam*diag(Jt•J)]^-1 • Jt•R
     //gauss-newton algorithm
     // newParams = oldParams + (Jt•J)^-1 • Jt•R
     var jac = self.jacobian(params);
@@ -146,11 +149,7 @@ function Minimizer(model, data, initialParams, options) {
       if (self.fitterOptions.debug) {
         console.log("parEstimate", paramEstimate, converge, ssr, iterationNumber);
       }
-      if (converge < 0.00001) {
-        paramEstimate = oldParams;
-        ssr = oldSSR;
-        break;
-      }
+      if (converge < 0.00001)  break;
 
 
     }
