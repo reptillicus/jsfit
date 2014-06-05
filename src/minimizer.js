@@ -17,7 +17,9 @@ function Minimizer(model, data, initialParams, options) {
   //the number of parameters
   self.npars = initialParams.length;
   //the l-m damping parameter
-  self.lambda = 0.001 
+  self.lambda = 0.001;
+  //stopping reason
+  self.stopReason = null;
 
   var defaultOptions = {
     maxIterations: 200, 
@@ -39,7 +41,7 @@ function Minimizer(model, data, initialParams, options) {
   //parameter array
   if (self.fitterOptions.parInfo) {
     if (self.fitterOptions.parInfo.length !== self.npars) {
-      throw new Error('parInfo and params must be SAME length')
+      throw new Error('parInfo and params must be SAME length');
     }
   }
 
@@ -100,7 +102,7 @@ function Minimizer(model, data, initialParams, options) {
     }
     if (self.fitterOptions.debug) {
       console.log("fjac:");
-      console.log(numeric.prettyPrint(fjac))
+      console.log(numeric.prettyPrint(fjac));
     }
     return fjac;
   };
@@ -138,21 +140,34 @@ function Minimizer(model, data, initialParams, options) {
         converge,
         ssr = self.ssr(paramEstimate);
 
-    for (var i=0; i<=self.fitterOptions.maxIterations; i++) {
-      iterationNumber++
+    for (var i=0; i<self.fitterOptions.maxIterations; i++) {
+      iterationNumber++;
       oldParams = paramEstimate;
       oldSSR = self.ssr(paramEstimate);
       paramEstimate = self.iterate(oldParams);
-      ssr = self.ssr(paramEstimate)
+      ssr = self.ssr(paramEstimate);
 
       converge = Math.abs((ssr-oldSSR)/ssr);
       if (self.fitterOptions.debug) {
         console.log("parEstimate", paramEstimate, converge, ssr, iterationNumber);
       }
-      if (converge < 0.00001)  break;
-
+      if (converge < 1e-4){
+        self.stopReason = "convergence";
+        break;
+      }
 
     }
-    return {"params": paramEstimate, "ssr": ssr, iterations:iterationNumber};
+    if (iterationNumber == self.fitterOptions.maxIterations) {
+      self.stopReason = "maxIterations";
+    }
+    return {
+              "params": paramEstimate, 
+              "ssr": ssr, 
+              iterations:iterationNumber, 
+              stopReason:self.stopReason, 
+              initialParams: self.initialParams,
+              xvals: self.xvals, 
+              yvals: self.yvals,
+           };
   };
 }
