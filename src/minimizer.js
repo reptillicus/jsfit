@@ -8,6 +8,14 @@ function Minimizer(model, data, initialParams, options) {
   self.xvals = data[0];
   //store the y values on self
   self.yvals = data[1];
+  //number of observations
+  self.nvals = self.xvals.length;
+  //the weights array, if it exists. If not, set all points to have unit weights
+  if (data.length < 3) {
+    self.weights = numeric.rep([self.nvals], 1.0);
+  } else { 
+    self.weights = data[2];
+  }
   //store the function for the model on self
   self.model = model;
   //store the parameters on self
@@ -16,13 +24,13 @@ function Minimizer(model, data, initialParams, options) {
   self.initialParams = initialParams;
   //the number of parameters
   self.npars = initialParams.length;
+  //degrees of freedom
+  self.dof = self.nvals - self.npars;
   //the l-m damping parameter
   self.lambda = 0.001;
   //stopping reason
   self.stopReason = null;
-  //number of observations
-  self.nvals = self.xvals.length;
-
+  
   var defaultOptions = {
     maxIterations: 200, 
     debug: false,
@@ -49,11 +57,11 @@ function Minimizer(model, data, initialParams, options) {
 
 
   //calculates the residuals from the  y-values and the model/params
-  // r_i = y_i - self.model(x_i, params)
+  // r_i = 1/w_i * (y_i - model(x_i, params))
   this.residuals = function(params) {
     var resid =[];
     for (var i=0; i<self.xvals.length; i++) {
-      var val = self.yvals[i] - self.model(self.xvals[i], params);
+      var val = (1/self.weights[i])*(self.yvals[i] - self.model(self.xvals[i], params));
       resid.push(val);
     }
     return resid;
@@ -169,11 +177,11 @@ function Minimizer(model, data, initialParams, options) {
         term2, lambda, newParams, oldSSR, newSSR;
 
     lambda = 0.001;
-    oldSSR = self.ssr(params);
+    // oldSSR = self.ssr(params);
     step1 = numeric.dot(jtjInv, jacTrans);
     step2 = numeric.dot(step1, self.residuals(params));
     newParams = numeric.add(params, step2);
-    newSSR = self.ssr(newParams);
+    // newSSR = self.ssr(newParams);
     
     return newParams;
   };
@@ -199,9 +207,9 @@ function Minimizer(model, data, initialParams, options) {
 
       converge = Math.abs((ssr-oldSSR)/ssr);
       if (self.fitterOptions.debug) {
-        console.log("parEstimate", self.params, converge, ssr, iterationNumber);
+        console.log("parEstimate", self.params, converge, ssr, iterationNumber, ssr-oldSSR);
       }
-      if (converge < 1e-3){
+      if (converge < 1e-4){
         self.stopReason = "convergence";
         break;
       }
@@ -216,12 +224,15 @@ function Minimizer(model, data, initialParams, options) {
               "hessian": self.hessian(),
               "jac": self.jacobian(self.params),
               "covar": self.covar(),
-              "ssr": ssr, 
-              iterations:iterationNumber, 
-              stopReason:self.stopReason, 
-              initialParams: self.initialParams,
-              xvals: self.xvals, 
-              yvals: self.yvals,
+              "chi2": self.ssr(self.params), 
+              "chi2_red": self.ssr(self.params)/self.dof,
+              "dof": self.dof, 
+              "iterations":iterationNumber, 
+              "stopReason":self.stopReason, 
+              "initialParams": self.initialParams,
+              "xvals": self.xvals, 
+              "yvals": self.yvals,
+              "residuals": self.residuals(self.params), 
            };
   };
 }
