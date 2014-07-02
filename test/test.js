@@ -6,11 +6,11 @@ function createChart (options) {
     nv.addGraph(function() {
       var chart = nv.models.lineChart()
                     .margin({left: 100})  //Adjust chart margins to give the x-axis some breathing room.
-                    .useInteractiveGuideline(true)  //We want nice looking tooltips and a guideline!
-                    .transitionDuration(350)  //how fast do you want the lines to transition?
-                    .showLegend(true)       //Show the legend, allowing users to turn on/off line series.
-                    .showYAxis(true)        //Show the y-axis
-                    .showXAxis(true)        //Show the x-axis
+                    // .useInteractiveGuideline(true)  //We want nice looking tooltips and a guideline!
+                    // .transitionDuration(350)  //how fast do you want the lines to transition?
+                    // .showLegend(true)       //Show the legend, allowing users to turn on/off line series.
+                    // .showYAxis(true)        //Show the y-axis
+                    // .showXAxis(true)        //Show the x-axis
       ;
 
       chart.xAxis     //Chart x-axis settings
@@ -24,7 +24,7 @@ function createChart (options) {
           .call(chart);          //Finally, render the chart!
 
       //Update the chart when window resizes.
-      nv.utils.windowResize(function() { chart.update() });
+      nv.utils.windowResize(function() { chart.update(); });
       return chart;
     });
   };
@@ -36,8 +36,8 @@ function createChart (options) {
 function exponential(x, params) {
   var C = params[0], 
       A = params[1], 
-      k = params[2]
-  return (C + A * Math.exp(k * x));
+      k = params[2];
+  return (C + A * Math.exp(-k * x));
 }
 
 function linear(x, params) {
@@ -45,6 +45,20 @@ function linear(x, params) {
       b = params[1];
   return (m*x + b);
 }
+
+function decay(x, params) {
+  A = params[0];
+  k = params[1];
+  return A + (Math.sin(3*x));
+}
+
+function sine(x, params) {
+  A = params[0];
+  w = params[1];
+  return A * Math.sin(w*x);
+}
+
+
 var generatePointsData = function(data, model, p0, params) {
   var points = [],
       line = [], 
@@ -83,46 +97,73 @@ var generatePointsData = function(data, model, p0, params) {
 
 
 
-var data = [
-        [1, 2, 3, 4, 5, 6, 7, 8],
-        [8.3, 11.0, 14.7, 19.7, 26.7, 35.2, 44.4, 55.9]
-       ];
-var p0 = [1.0, 1.0, 0.2];
+// var data = [
+//         [1, 2, 3, 4, 5, 6, 7, 8],
+//         [8.3, 11.0, 14.7, 19.7, 26.7, 35.2, 44.4, 55.9]
+//        ];
+// var p0 = [1.0, 1.0, 0.2];
 
 
-var minimizer = new Minimizer(exponential, data, p0, {'debug': false, parInfo: [{'name': 'C'}, {'name': 'A'}, {'name': 'k'}] });
-var start = new Date().getTime();
-var fit = minimizer.fit();
-console.log(fit)
-var end = new Date().getTime();
-var time = end - start;
+// var minimizer = new Minimizer(exponential, data, p0, {'debug': false, parInfo: [{'name': 'C'}, {'name': 'A'}, {'name': 'k'}] });
+// var start = new Date().getTime();
+// var fit = minimizer.fit();
+// console.log(fit)
+// var end = new Date().getTime();
+// var time = end - start;
 
-console.log("time", time)
+// console.log("time", time)
 
-createChart({"data":generatePointsData(data, exponential, p0, fit.params), element:"#chart1"});
+// createChart({"data":generatePointsData(data, exponential, p0, fit.params), element:"#chart1"});
 
 
-p0 = [20.0, 1.0, 0.04];
+// p0 = [20.0, 1.0, 0.04];
+// var npoints = 100;
+// xvals = numeric.linspace(1,npoints);
+// clean = xvals.map(function(d, i){return exponential(d, p0);});
+// noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.1), 0.05), 1.0);
+// yvals = numeric.mul(clean, noise);
+// data2 = [ 
+//          xvals, 
+//          yvals,
+//         ];
+
+// p0 = [1.0, 5.0, 0.015]
+// var start = new Date().getTime();var start = new Date().getTime();
+// var minimizer = new Minimizer(exponential, data2, p0, {'debug': false, parInfo: [{'name': 'C'}, {'name': 'A'}, {'name': 'k'}] });
+// var fit2 = minimizer.fit();
+// console.log(fit2)
+// var end = new Date().getTime();
+// var time = end - start;
+// console.log("time2", time);
+
+// createChart({"data":generatePointsData(data2, exponential, p0, fit2.params), element:"#chart2"});
+
+//
+// Decaying exponential
+//
+
+p0 = [10.0, 1.0];
 var npoints = 100;
-xvals = numeric.linspace(1,npoints);
-clean = xvals.map(function(d, i){return exponential(d, p0);});
+xvals = numeric.linspace(0,10, npoints);
+clean = xvals.map(function(d, i){return sine(d, p0);});
 noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.1), 0.05), 1.0);
 yvals = numeric.mul(clean, noise);
-data2 = [ 
+data3 = [ 
          xvals, 
-         yvals,
+         clean,
         ];
+var t1 = new Date()
+p0 = [15.1, 1.2];
+var parInfo = [{'name': 'A', limits: [0.1, 100]}, {'name': 'w', limits:[0.1, 100]}];
+var minimizer = new Minimizer(sine, data3, p0, {'debug': true, parInfo:parInfo});
+var fit3 = minimizer.fit();
+console.log(fit3);
+var t2 = new Date();
+console.log(t2-t1)
 
-p0 = [1.0, 5.0, 0.015]
-var start = new Date().getTime();var start = new Date().getTime();
-var minimizer = new Minimizer(exponential, data2, p0, {'debug': false, parInfo: [{'name': 'C'}, {'name': 'A'}, {'name': 'k'}] });
-var fit2 = minimizer.fit();
-console.log(fit2)
-var end = new Date().getTime();
-var time = end - start;
-console.log("time2", time);
+createChart({"data":generatePointsData(data3, sine, p0, fit3.params), element:"#chart3"});
 
-createChart({"data":generatePointsData(data2, exponential, p0, fit2.params), element:"#chart2"});
+
 
 
 

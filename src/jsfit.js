@@ -1,9 +1,10 @@
 // "use strict"
 
 function Minimizer(model, data, initialParams, options) {
+  //make a copy to keep around inside the methods. 
   var self = this;
   //the smallest possible delta due to floating point precision.
-  self.epsilon = numeric.epsilon*100;
+  self.epsilon = numeric.epsilon*10;
   //store the x values on self
   self.xvals = data[0];
   //store the y values on self
@@ -28,9 +29,18 @@ function Minimizer(model, data, initialParams, options) {
   self.dof = self.nvals - self.npars;
   //the l-m damping parameter
   self.lambda = 0.001;
+  //the lambda up paramaeter
+  self.lambdaPlus = 5;
+  //the lambda decrease parameter
+  self.lambdaMinus = 0.1;
   //stopping reason
   self.stopReason = null;
+  //number of jac calcs
+  self.numJac = 0;
+  //the reason for stopping
+  self.stopReason = null;
   
+  //the default fitter options
   var defaultOptions = {
     maxIterations: 200, 
     debug: false,
@@ -58,7 +68,7 @@ function Minimizer(model, data, initialParams, options) {
 
   //calculates the residuals from the  y-values and the model/params
   // r_i = 1/w_i * (y_i - model(x_i, params))
-  this.residuals = function(params) {
+  self.residuals = function(params) {
     var resid =[];
     for (var i=0; i<self.xvals.length; i++) {
       var val = (1/self.weights[i])*(self.yvals[i] - self.model(self.xvals[i], params));
@@ -68,14 +78,14 @@ function Minimizer(model, data, initialParams, options) {
   };
 
   //gives the sum of the squared residuals.
-  this.ssr = function(params) {
+  self.ssr = function(params) {
     var ssr;
     ssr = numeric.dot(self.residuals(params), self.residuals(params));
     return ssr;
   };
 
   //passing in an m x n array, return an array with only the diagonals, all the rest are zeros
-  this.diagonal = function (arr) {
+  self.diagonal = function (arr) {
     var dim, out;
     dim = numeric.dim(arr);
     out = numeric.rep(dim,0);
@@ -87,7 +97,7 @@ function Minimizer(model, data, initialParams, options) {
     return out;
   };
 
-  this.hessian = function () {
+  self.hessian = function () {
     var jac, jacTrans, hes;
     jac = self.jacobian(self.params);
     jacTrans = numeric.transpose(jac);
@@ -95,7 +105,7 @@ function Minimizer(model, data, initialParams, options) {
     return hes;
   };
 
-  this.covar = function () {
+  self.covar = function () {
     /*
       If the minimisation uses the weighted least-squares function f_i = (Y(x, t_i) - y_i) / \sigma_i then the covariance matrix 
       above gives the statistical error on the best-fit parameters resulting from the Gaussian errors \sigma_i on 
@@ -115,7 +125,7 @@ function Minimizer(model, data, initialParams, options) {
     return covar;
   };
 
-  this.parameterErrors = function () {
+  self.parameterErrors = function () {
     //should be just the diagonal elements of the covariance matrix
     var covar, parameterErrors;
     covar = self.covar();
@@ -123,7 +133,7 @@ function Minimizer(model, data, initialParams, options) {
     return parameterErrors;
   };
 
-  this.totalError = function() {
+  self.totalError = function() {
     // sig^2 = r(p)T * r(p) / (m -n) , m=# of obs, n = #of free params
     var totalError, dof, r;
 
@@ -133,8 +143,10 @@ function Minimizer(model, data, initialParams, options) {
     return totalError;
   };
 
-  //TODO: Make this derivative a two sided one! 
-  this.jacobian = function(params) {
+  self.jacobian = function(params) {
+    // Calculate a numeric jacobiab of the parameters. 
+    // Jt•J is the approximation of the hessian
+    //
     var h, 
         fjac = numeric.rep([self.xvals.length, self.npars],0),
         origParams, 
@@ -155,15 +167,14 @@ function Minimizer(model, data, initialParams, options) {
         fjac[j][i] = (val1 - val2) / (2*h);
       }
     }
-    if (self.fitterOptions.debug) {
-      console.log("fjac:");
-      console.log(numeric.prettyPrint(fjac));
-    }
+    //update the number of times jac has been calculated
+    self.numJac++;
+
     return fjac;
   };
 
   //perform the minimization iteratively
-  this.iterate = function (params) {
+  self.iterate = function (params) {
     //l-m algorithm 
     //newParams = oldParams + [Jt•J - lam*diag(Jt•J)]^-1 • Jt•R
     //gauss-newton algorithm
@@ -175,19 +186,41 @@ function Minimizer(model, data, initialParams, options) {
     var diag = self.diagonal(jtj);
     var step1, step2, step3, step4,
         term2, lambda, newParams, oldSSR, newSSR;
+    var cost, newCost;
 
-    lambda = 0.001;
+    cost = 0.5 * self.ssr();
+    function lm_iteration() {
+      
+    }
     // oldSSR = self.ssr(params);
-    step1 = numeric.dot(jtjInv, jacTrans);
-    step2 = numeric.dot(step1, self.residuals(params));
-    newParams = numeric.add(params, step2);
+    // step1 = numeric.dot(jtjInv, jacTrans);
+    // step2 = numeric.dot(step1, self.residuals(params));
+    // newParams = numeric.add(params, step2);
     // newSSR = self.ssr(newParams);
-    
+    step1 = numeric.mul(diag, self.lambda);
+    step2 = numeric.inv(numeric.sub(jtj, step1));
+    step3 = numeric.dot(step2, jacTrans);
+    step4 = numeric.dot(step3, self.residuals(params));
+    newParams = numeric.add(params, step4);    
+    // console.log(newParams)
+    if (self.fitterOptions.parInfo) {
+      for (var k=0; k<newParams.length; k++) {
+        if (self.fitterOptions.parInfo[k].limits) {
+          if (newParams[k] < self.fitterOptions.parInfo[k].limits[0]) {
+            newParams[k] = self.fitterOptions.parInfo[k].limits[0];
+          }
+          if (newParams[k] > self.fitterOptions.parInfo[k].limits[1]) {
+            newParams[k] = self.fitterOptions.parInfo[k].limits[1];
+          }
+        }
+      }
+    }
+
     return newParams;
   };
 
-  //the main public method for 
-  this.fit = function() {
+  //the main public method for the fitter. All other methods are really internal.
+  self.fit = function() {
     var iterationNumber = 0, 
         paramEstimate = self.params,
         errorEstimate,
@@ -205,10 +238,17 @@ function Minimizer(model, data, initialParams, options) {
       self.params = self.iterate(oldParams);
       ssr = self.ssr(self.params);
 
-      converge = Math.abs((ssr-oldSSR)/ssr);
       if (self.fitterOptions.debug) {
         console.log("parEstimate", self.params, converge, ssr, iterationNumber, ssr-oldSSR);
       }
+      //If the SSR is really small, that means we are getting a perfect fit, so stop
+      if (ssr < numeric.epsilon) {
+        self.stopReason = "SSRConvergence";
+        break;
+      }
+
+      //check for convergence based on change in SSR over last iterations
+      converge = Math.abs((ssr-oldSSR)/ssr);
       if (converge < 1e-4){
         self.stopReason = "convergence";
         break;
@@ -232,7 +272,8 @@ function Minimizer(model, data, initialParams, options) {
               "initialParams": self.initialParams,
               "xvals": self.xvals, 
               "yvals": self.yvals,
-              "residuals": self.residuals(self.params), 
+              "residuals": self.residuals(self.params),
+              "numJac": self.numJac
            };
   };
 }
