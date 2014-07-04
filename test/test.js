@@ -121,53 +121,53 @@ var generatePointsData = function(data, model, p0, params) {
 // createChart({"data":generatePointsData(data, exponential, p0, fit.params), element:"#chart1"});
 
 
-// p0 = [20.0, 1.0, 0.04];
-// var npoints = 100;
-// xvals = numeric.linspace(1,npoints);
-// clean = xvals.map(function(d, i){return exponential(d, p0);});
-// noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.1), 0.05), 1.0);
-// yvals = numeric.mul(clean, noise);
-// data2 = [ 
-//          xvals, 
-//          yvals,
-//         ];
+p0 = [10.0, 100.0, 1.0];
+var npoints = 100;
+xvals = numeric.linspace(1,10, npoints);
+clean = xvals.map(function(d, i){return exponential(d, p0);});
+noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.2), 0.1), 1.0);
+yvals = numeric.mul(clean, noise);
+data2 = [ 
+         xvals, 
+         yvals,
+        ];
 
-// p0 = [1.0, 5.0, 0.015]
-// var start = new Date().getTime();var start = new Date().getTime();
-// var minimizer = new Minimizer(exponential, data2, p0, {'debug': false, parInfo: [{'name': 'C'}, {'name': 'A'}, {'name': 'k'}] });
-// var fit2 = minimizer.fit();
-// console.log(fit2)
-// var end = new Date().getTime();
-// var time = end - start;
-// console.log("time2", time);
+p0 = [ 40.0, yvals[0], 0.5]
+var start = new Date().getTime();var start = new Date().getTime();
+var minimizer = new Minimizer(exponential, data2, p0, {'debug': false, parInfo: [{'name': 'C'}, {'name': 'A'}, {'name': 'k'}] });
+var fit2 = minimizer.fit();
+console.log(fit2)
+var end = new Date().getTime();
+var time = end - start;
+console.log("time2", time);
 
-// createChart({"data":generatePointsData(data2, exponential, p0, fit2.params), element:"#chart2"});
+createChart({"data":generatePointsData(data2, exponential, p0, fit2.params), element:"#chart2"});
 
 //
 // Decaying exponential
 //
 
-p0 = [10.0, 1.0];
-var npoints = 100;
-xvals = numeric.linspace(0,10, npoints);
-clean = xvals.map(function(d, i){return sine(d, p0);});
-noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.2), 0.1), 1.0);
-yvals = numeric.mul(clean, noise);
-data3 = [ 
-         xvals, 
-         yvals,
-        ];
-console.log(data3)
-var t1 = new Date()
-p0 = [5.0, 1.5];
-var parInfo = [{'name': 'A', fixed:false}, {'name': 'w', fixed:false}];
-var minimizer = new Minimizer(sine, data3, p0, {'debug': false, parInfo:parInfo});
-var fit3 = minimizer.fit();
-console.log(fit3);
-var t2 = new Date();
-console.log(t2-t1)
+// p0 = [10.0, 1.0];
+// var npoints = 100;
+// xvals = numeric.linspace(0,10, npoints);
+// clean = xvals.map(function(d, i){return sine(d, p0);});
+// noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.2), 0.1), 1.0);
+// yvals = numeric.mul(clean, noise);
+// data3 = [ 
+//          xvals, 
+//          yvals,
+//         ];
+// console.log(data3)
+// var t1 = new Date()
+// p0 = [5.0, 1.1];
+// var parInfo = [{'name': 'A', fixed:false}, {'name': 'w', fixed:false}];
+// var minimizer = new Minimizer(sine, data3, p0, {'debug': false, parInfo:parInfo});
+// var fit3 = minimizer.fit();
+// console.log(fit3);
+// var t2 = new Date();
+// console.log(t2-t1)
 
-createChart({"data":generatePointsData(data3, sine, p0, fit3.params), element:"#chart3"});
+// createChart({"data":generatePointsData(data3, sine, p0, fit3.params), element:"#chart3"});
 
 
 
