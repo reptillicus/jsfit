@@ -4,7 +4,7 @@ function Minimizer(model, data, initialParams, options) {
   //make a copy to keep around inside the methods. 
   var self = this;
   //the smallest possible delta due to floating point precision.
-  self.epsilon = numeric.epsilon*10;
+  self.epsilon = numeric.epsilon*100;
   //store the x values on self
   self.xvals = data[0];
   //store the y values on self
@@ -30,9 +30,9 @@ function Minimizer(model, data, initialParams, options) {
   //the l-m damping parameter
   self.lambda = 0.001;
   //the lambda up paramaeter
-  self.lambdaPlus = 5;
+  self.lambdaPlus = 4.0;
   //the lambda decrease parameter
-  self.lambdaMinus = 0.1;
+  self.lambdaMinus = 0.25;
   //stopping reason
   self.stopReason = null;
   //number of jac calcs
@@ -48,6 +48,10 @@ function Minimizer(model, data, initialParams, options) {
     chart: false,
     paramDeltaConverge: 0.001,
   };
+
+  if (self.xvals.length !== self.yvals.length) {
+    throw new Error('x and y values are different lengths');
+  }
 
   //merge in any options that are passed in into the defaultOptions object
   self.fitterOptions = defaultOptions;
@@ -91,17 +95,20 @@ function Minimizer(model, data, initialParams, options) {
     out = numeric.rep(dim,0);
     for (var i=0; i<dim[0]; i++) {
       for (var j=0; j<dim[1]; j++) {
-        out[i][j] = arr[i][j];
+        if (i===j) {
+          out[i][j] = arr[i][j];
+        }
       }
     }
     return out;
   };
 
   self.hessian = function () {
+    // H = 2 * Jt•J
     var jac, jacTrans, hes;
     jac = self.jacobian(self.params);
     jacTrans = numeric.transpose(jac);
-    hes = numeric.dot(jacTrans, jac);
+    hes = numeric.mul(2.0, numeric.dot(jacTrans, jac));
     return hes;
   };
 
@@ -157,20 +164,45 @@ function Minimizer(model, data, initialParams, options) {
     for (var i=0; i<params.length; i++) {
       modParamsLow = params.slice(0);
       modParamsHigh = params.slice(0);
-      //Scale the step to the size of the paramter
+      //Scale the step to the magnitude of the paramter
       h = Math.abs(params[i] * self.epsilon);
       modParamsLow[i] = params[i] - h;
       modParamsHigh[i] = params[i] + h;
       for (var j=0; j<self.xvals.length; j++) {
-        var val1 = self.model(self.xvals[j], modParamsHigh);
-        var val2 = self.model(self.xvals[j], modParamsLow);
-        fjac[j][i] = (val1 - val2) / (2*h);
+        var left = self.model(self.xvals[j], modParamsHigh);
+        var right = self.model(self.xvals[j], modParamsLow);
+        fjac[j][i] = (left - right) / (2*h);
       }
     }
     //update the number of times jac has been calculated
     self.numJac++;
 
     return fjac;
+  };
+
+  self.fixParameters= function(pars) {
+    //fix any parameters if they are going out of bounds
+    if (self.fitterOptions.parInfo) {
+      for (var k=0; k<pars.length; k++) {
+        //set the limits, if they exist in the parInfo array
+        if (self.fitterOptions.parInfo[k].limits) {
+          if (pars[k] < self.fitterOptions.parInfo[k].limits[0]) {
+            pars[k] = self.fitterOptions.parInfo[k].limits[0];
+            // pars[k] = self.initialParams[k];
+          }
+          if (pars[k] > self.fitterOptions.parInfo[k].limits[1]) {
+            pars[k] = self.fitterOptions.parInfo[k].limits[1];
+            // pars[k] = self.initialParams[k]
+          }
+        }
+
+        //reset the fixed params to the initial values
+        if (self.fitterOptions.parInfo[k].fixed) {
+          pars[k] = self.initialParams[k];
+        }
+      }
+    }
+    return pars;
   };
 
   //perform the minimization iteratively
@@ -187,34 +219,39 @@ function Minimizer(model, data, initialParams, options) {
     var step1, step2, step3, step4,
         term2, lambda, newParams, oldSSR, newSSR;
     var cost, newCost;
+    var g, delta;
 
-    cost = 0.5 * self.ssr();
-    function lm_iteration() {
-      
+
+    cost = 0.5 * self.ssr(params);
+    cost_gradient = numeric.dot(jacTrans, self.residuals(params));
+    console.log(diag)
+    identity = numeric.identity(numeric.dim(jtj)[0])
+    g = numeric.add(jtj, numeric.mul(self.lambda, diag));
+    var t = numeric.add(jtj, numeric.mul(self.lambda, identity));
+    console.log(numeric.prettyPrint(g))
+    console.log(numeric.prettyPrint(t))
+    // g = numeric.add(jtj, numeric.mul(self.lambda, identity));
+    delta = numeric.dot(cost_gradient, numeric.inv(g));
+    newParams = numeric.add(params, delta);
+    console.log(delta)    
+
+    //fix and params that are fixed or limited
+    newParams = self.fixParameters(newParams);
+    newCost = 0.5 * self.ssr(newParams);
+    if (newCost < cost) {
+      self.lambda = self.lambda * self.lambdaMinus;
     }
-    // oldSSR = self.ssr(params);
-    // step1 = numeric.dot(jtjInv, jacTrans);
-    // step2 = numeric.dot(step1, self.residuals(params));
-    // newParams = numeric.add(params, step2);
-    // newSSR = self.ssr(newParams);
-    step1 = numeric.mul(diag, self.lambda);
-    step2 = numeric.inv(numeric.sub(jtj, step1));
-    step3 = numeric.dot(step2, jacTrans);
-    step4 = numeric.dot(step3, self.residuals(params));
-    newParams = numeric.add(params, step4);    
-    // console.log(newParams)
-    if (self.fitterOptions.parInfo) {
-      for (var k=0; k<newParams.length; k++) {
-        if (self.fitterOptions.parInfo[k].limits) {
-          if (newParams[k] < self.fitterOptions.parInfo[k].limits[0]) {
-            newParams[k] = self.fitterOptions.parInfo[k].limits[0];
-          }
-          if (newParams[k] > self.fitterOptions.parInfo[k].limits[1]) {
-            newParams[k] = self.fitterOptions.parInfo[k].limits[1];
-          }
-        }
-      }
+    while (newCost >= cost) {
+      self.lambda = self.lambda * self.lambdaPlus;
+      cost_gradient = numeric.dot(jacTrans, self.residuals(params));
+      g = numeric.sub(jtj, numeric.mul(diag, self.lambda));
+      newParams = numeric.add(params, numeric.dot(numeric.inv(g), cost_gradient));
+      newParams = self.fixParameters(newParams);
+      newCost = 0.5 * self.ssr(newParams);
+      // console.log(cost, newCost, self.lambda, newParams)
     }
+    // self.lambda = self.lambda * self.lambdaMinus;
+    console.log(cost, newCost, params, newParams);
 
     return newParams;
   };
@@ -242,14 +279,14 @@ function Minimizer(model, data, initialParams, options) {
         console.log("parEstimate", self.params, converge, ssr, iterationNumber, ssr-oldSSR);
       }
       //If the SSR is really small, that means we are getting a perfect fit, so stop
-      if (ssr < numeric.epsilon) {
-        self.stopReason = "SSRConvergence";
+      if (ssr < self.fitterOptions.ftol) {
+        self.stopReason = "ftol";
         break;
       }
 
       //check for convergence based on change in SSR over last iterations
       converge = Math.abs((ssr-oldSSR)/ssr);
-      if (converge < 1e-4){
+      if (converge < 1e-6){
         self.stopReason = "convergence";
         break;
       }

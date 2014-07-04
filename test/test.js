@@ -6,11 +6,11 @@ function createChart (options) {
     nv.addGraph(function() {
       var chart = nv.models.lineChart()
                     .margin({left: 100})  //Adjust chart margins to give the x-axis some breathing room.
-                    // .useInteractiveGuideline(true)  //We want nice looking tooltips and a guideline!
-                    // .transitionDuration(350)  //how fast do you want the lines to transition?
-                    // .showLegend(true)       //Show the legend, allowing users to turn on/off line series.
-                    // .showYAxis(true)        //Show the y-axis
-                    // .showXAxis(true)        //Show the x-axis
+                    .useInteractiveGuideline(true)  //We want nice looking tooltips and a guideline!
+                    .transitionDuration(350)  //how fast do you want the lines to transition?
+                    .showLegend(true)       //Show the legend, allowing users to turn on/off line series.
+                    .showYAxis(true)        //Show the y-axis
+                    .showXAxis(true)        //Show the x-axis
       ;
 
       chart.xAxis     //Chart x-axis settings
@@ -38,6 +38,11 @@ function exponential(x, params) {
       A = params[1], 
       k = params[2];
   return (C + A * Math.exp(-k * x));
+}
+
+function flat(x, params) {
+  var k = params[0];
+  return k;
 }
 
 function linear(x, params) {
@@ -146,23 +151,23 @@ p0 = [10.0, 1.0];
 var npoints = 100;
 xvals = numeric.linspace(0,10, npoints);
 clean = xvals.map(function(d, i){return sine(d, p0);});
-noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.1), 0.05), 1.0);
+noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.2), 0.1), 1.0);
 yvals = numeric.mul(clean, noise);
 data3 = [ 
          xvals, 
-         clean,
+         yvals,
         ];
+console.log(data3)
 var t1 = new Date()
-p0 = [15.1, 1.2];
-var parInfo = [{'name': 'A', limits: [0.1, 100]}, {'name': 'w', limits:[0.1, 100]}];
-var minimizer = new Minimizer(sine, data3, p0, {'debug': true, parInfo:parInfo});
+p0 = [5.0, 1.5];
+var parInfo = [{'name': 'A', fixed:false}, {'name': 'w', fixed:false}];
+var minimizer = new Minimizer(sine, data3, p0, {'debug': false, parInfo:parInfo});
 var fit3 = minimizer.fit();
 console.log(fit3);
 var t2 = new Date();
 console.log(t2-t1)
 
 createChart({"data":generatePointsData(data3, sine, p0, fit3.params), element:"#chart3"});
-
 
 
 
