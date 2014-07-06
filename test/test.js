@@ -58,9 +58,10 @@ function decay(x, params) {
 }
 
 function sine(x, params) {
-  A = params[0];
-  w = params[1];
-  return A * Math.sin(w*x);
+  C = params[0];
+  A = params[1];
+  w = params[2];
+  return C + A * Math.sin(w*x);
 }
 
 
@@ -123,7 +124,7 @@ var generatePointsData = function(data, model, p0, params) {
 
 p0 = [10.0, 100.0, 1.0];
 var npoints = 100;
-xvals = numeric.linspace(1,10, npoints);
+xvals = numeric.linspace(0,10, npoints);
 clean = xvals.map(function(d, i){return exponential(d, p0);});
 noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.2), 0.1), 1.0);
 yvals = numeric.mul(clean, noise);
@@ -147,27 +148,26 @@ createChart({"data":generatePointsData(data2, exponential, p0, fit2.params), ele
 // Decaying exponential
 //
 
-// p0 = [10.0, 1.0];
-// var npoints = 100;
-// xvals = numeric.linspace(0,10, npoints);
-// clean = xvals.map(function(d, i){return sine(d, p0);});
-// noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.2), 0.1), 1.0);
-// yvals = numeric.mul(clean, noise);
-// data3 = [ 
-//          xvals, 
-//          yvals,
-//         ];
-// console.log(data3)
-// var t1 = new Date()
-// p0 = [5.0, 1.1];
-// var parInfo = [{'name': 'A', fixed:false}, {'name': 'w', fixed:false}];
-// var minimizer = new Minimizer(sine, data3, p0, {'debug': false, parInfo:parInfo});
-// var fit3 = minimizer.fit();
-// console.log(fit3);
-// var t2 = new Date();
-// console.log(t2-t1)
+p0 = [0.0, 10.0, 1.0];
+var npoints = 100;
+xvals = numeric.linspace(0,10, npoints);
+clean = xvals.map(function(d, i){return sine(d, p0);});
+noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.1), 0.05), 1.0);
+yvals = numeric.mul(clean, noise);
+data3 = [ 
+         xvals, 
+         yvals,
+        ];
+var t1 = new Date()
+p0 = [1.0, 6.0, 1.3];
+var parInfo = [{name: 'C', fixed: true}, {'name': 'A', fixed:false}, {'name': 'w', fixed:false}];
+var minimizer = new Minimizer(sine, data3, p0, {'debug': false, parInfo:parInfo});
+var fit3 = minimizer.fit();
+console.log(fit3);
+var t2 = new Date();
+console.log(t2-t1)
 
-// createChart({"data":generatePointsData(data3, sine, p0, fit3.params), element:"#chart3"});
+createChart({"data":generatePointsData(data3, sine, p0, fit3.params), element:"#chart3"});
 
 
 

@@ -25,10 +25,8 @@ function Minimizer(model, data, initialParams, options) {
   self.initialParams = initialParams;
   //the number of parameters
   self.npars = initialParams.length;
-  //degrees of freedom
-  self.dof = self.nvals - self.npars;
   //the l-m damping parameter
-  self.lambda = 0.01;
+  self.lambda = 100.0;
   //the lambda up paramaeter
   self.lambdaPlus = 10.0;
   //the lambda decrease parameter
@@ -67,8 +65,16 @@ function Minimizer(model, data, initialParams, options) {
     if (self.fitterOptions.parInfo.length !== self.npars) {
       throw new Error('parInfo and params must be SAME length');
     }
-  }
+    var nfree = 0;
+    self.mask = numeric.rep(self.params, 1.0);
+    for (var i=0; i<self.npars; i++) {
+      if (self.fitterOptions.parinfo[i].fixed) {
 
+      }
+    }
+    //degrees of freedom
+    self.dof = self.nvals - self.npars;
+  }
 
   //calculates the residuals from the  y-values and the model/params
   // r_i = 1/w_i * (y_i - model(x_i, params))
@@ -159,7 +165,7 @@ function Minimizer(model, data, initialParams, options) {
         origParams, 
         modParamsHigh,
         modParamsLow, 
-        fjac_row = [];
+        left, right;
 
     for (var i=0; i<params.length; i++) {
       modParamsLow = params.slice(0);
@@ -169,9 +175,18 @@ function Minimizer(model, data, initialParams, options) {
       modParamsLow[i] = params[i] - h;
       modParamsHigh[i] = params[i] + h;
       for (var j=0; j<self.xvals.length; j++) {
-        var left = self.model(self.xvals[j], modParamsHigh);
-        var right = self.model(self.xvals[j], modParamsLow);
+        //fix the jacobian to be 0.0 if the parameter is fixed
+        left = self.model(self.xvals[j], modParamsHigh);
+        right = self.model(self.xvals[j], modParamsLow);
         fjac[j][i] = (left - right) / (2*h);
+      }
+    }
+
+    if (self.fitterOptions.parInfo) {
+      for (var i=0; i<params.length; i++) {
+        if (self.fitterOptions.parInfo[i].fixed) {
+
+        }
       }
     }
     //update the number of times jac has been calculated
@@ -209,22 +224,30 @@ function Minimizer(model, data, initialParams, options) {
     var newParams, 
         jac, jacTrans, jtj, jtjInv, identity,
         diag, cost_gradient, g, delta, t;
-    // console.log(self.lambda)
     jac = self.jacobian(params);
     jacTrans = numeric.transpose(jac);
     jtj = numeric.dot(jacTrans, jac);
     diag = self.diagonal(jtj);
-    identity = numeric.identity(numeric.dim(jtj)[0]);
+    // identity = numeric.identity(numeric.dim(jtj)[0]);
     cost_gradient = numeric.dot(jacTrans, self.residuals(params));
     g = numeric.add(jtj, numeric.mul(self.lambda, diag));
-    t = numeric.add(jtj, numeric.mul(self.lambda, identity));
+    // t = numeric.add(jtj, numeric.mul(self.lambda, identity));
     // console.log(numeric.prettyPrint(g));
     // console.log(numeric.prettyPrint(t));
-    delta = numeric.dot(cost_gradient, numeric.inv(g));
-    delta = numeric.mul(delta, 1.0)
-    // console.log(delta)
+    console.log(g, numeric.inv(g))
+    delta = numeric.dot(numeric.inv(g), cost_gradient);
+    
+    //need to limit the step size? 
+    for (var i=0; i<params.length; i++) {
+      if (Math.abs(delta[i]) > 0.5 * Math.abs(params[i])) {
+        delta[i] *= 0.5*delta[i];
+      }
+    }
+
+    // delta = numeric.mul(delta, 1.0)
+    console.log(delta)
     newParams = numeric.add(params, delta);
-    console.log(params, newParams)
+    // console.log(params, newParams)
     return newParams;
   };
 
@@ -234,64 +257,28 @@ function Minimizer(model, data, initialParams, options) {
 
   //perform the minimization iteratively
   self.iterate = function (params) {
-    //l-m algorithm 
-    //newParams = oldParams + [Jt•J - lam*diag(Jt•J)]^-1 • Jt•R
-    //gauss-newton algorithm
-    // newParams = oldParams + (Jt•J)^-1 • Jt•R
-    // var jac = self.jacobian(params);
-    // var jacTrans = numeric.transpose(jac);
-    // var jtj = numeric.dot(jacTrans, jac);
-    // var jtjInv = numeric.inv(jtj);
-    // var diag = self.diagonal(jtj);
-    // var step1, step2, step3, step4,
-    //     term2, lambda, newParams, oldSSR, newSSR;
-    // var cost, newCost;
-    // var g, delta, cost_gradient;
-    var cost, newCost, newParams
-
+    var cost, newCost, newParams;
 
     cost = 0.5 * self.ssr(params);
-    // cost_gradient = numeric.dot(jacTrans, self.residuals(params));
-    // console.log(diag)
-    // identity = numeric.identity(numeric.dim(jtj)[0])
-    // g = numeric.add(jtj, numeric.mul(self.lambda, diag));
-    // var t = numeric.add(jtj, numeric.mul(self.lambda, identity));
-    // console.log(numeric.prettyPrint(g))
-    // console.log(numeric.prettyPrint(t))
-    // // g = numeric.add(jtj, numeric.mul(self.lambda, identity));
-    // delta = numeric.dot(cost_gradient, numeric.inv(g));
-    // newParams = numeric.add(params, delta);
-    // console.log(delta)    
     newParams = self.lmStep(params);
     //fix and params that are fixed or limited
     newParams = self.fixParameters(newParams);
     newCost = 0.5 * self.ssr(newParams);
+    // console.log(cost, newCost, params, newParams)
     if (newCost < cost) {
-      self.lambda *= 0.5;
-    } else {
-      self.lambda *= 10;
-      // newParams = params.slice(0);
+      self.lambda *= self.lambdaMinus;
+    } 
+    // console.log(self.lambda, cost, newCost, params, newParams);
+
+    //this is the inner loop, where we keep increasing the damping parameter if
+    //the cost is greater
+    while (newCost > cost) {
+      self.lambda *= self.lambdaPlus;
+      newParams = self.lmStep(params);
+      newCost = 0.5 * self.ssr(newParams);
+      console.log(cost, newCost, params, newParams)
     }
-
-    // while (newCost >= cost) {
-    //   console.log("in while loop")
-    //   self.lambda = self.lambda * self.lambdaPlus;
-    //   // jac = self.jacobian(newParams);
-    //   // jacTrans = numeric.transpose(jac);
-    //   // jtj = numeric.dot(jacTrans, jac);
-    //   // jtjInv = numeric.inv(jtj);
-    //   // self.lambda = self.lambda * self.lambdaPlus;
-    //   // cost_gradient = numeric.dot(jacTrans, self.residuals(newParams));
-    //   // g = numeric.sub(jtj, numeric.mul(diag, self.lambda));
-    //   // newParams = numeric.add(params, numeric.dot(numeric.inv(g), cost_gradient));
-    //   newParams = self.lmStep(newParams);
-    //   newParams = self.fixParameters(newParams);
-    //   newCost = 0.5 * self.ssr(newParams);
-    //   // console.log(cost, newCost, self.lambda, newParams)
-    // }
-    // self.lambda = self.lambda * self.lambdaMinus;
-    // console.log(cost, newCost, params, newParams);
-
+    
     return newParams;
   };
 
@@ -325,7 +312,7 @@ function Minimizer(model, data, initialParams, options) {
 
       //check for convergence based on change in SSR over last iterations
       converge = Math.abs((ssr-oldSSR)/ssr);
-      if (converge < 1e-6){
+      if (converge < 1e-4){
         self.stopReason = "convergence";
         break;
       }
@@ -337,6 +324,7 @@ function Minimizer(model, data, initialParams, options) {
     return {
               "params": self.params,
               "parameterErrors": self.parameterErrors(),
+              "parInfo": self.fitterOptions.parInfo,
               "hessian": self.hessian(),
               "jac": self.jacobian(self.params),
               "covar": self.covar(),
