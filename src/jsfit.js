@@ -17,14 +17,21 @@ function Minimizer(model, data, initialParams, options) {
   } else { 
     self.weights = data[2];
   }
-  //store the function for the model on self
-  self.model = model;
   //store the parameters on self
   self.params = initialParams;
   //set the initial params
   self.initialParams = initialParams;
   //the number of parameters
   self.npars = initialParams.length;
+  //An array indicating if the parameter is free of fixed 
+  self.free = numeric.rep([self.npars], 1);
+  //the number of degrees of freedom
+  self.dof = self.nvals - self.nfree;
+  //the number of free parameters
+  self.nfree = self.params.length;
+  //store the function for the model on self
+  self.model = model;
+  
   //the l-m damping parameter
   self.lambda = 100.0;
   //the lambda up paramaeter
@@ -37,7 +44,7 @@ function Minimizer(model, data, initialParams, options) {
   self.numJac = 0;
   //the reason for stopping
   self.stopReason = null;
-  
+  console.log(self.free)
   //the default fitter options
   var defaultOptions = {
     maxIterations: 200, 
@@ -65,15 +72,14 @@ function Minimizer(model, data, initialParams, options) {
     if (self.fitterOptions.parInfo.length !== self.npars) {
       throw new Error('parInfo and params must be SAME length');
     }
-    var nfree = 0;
-    self.mask = numeric.rep(self.params, 1.0);
     for (var i=0; i<self.npars; i++) {
-      if (self.fitterOptions.parinfo[i].fixed) {
-
+      if (self.fitterOptions.parInfo[i].fixed) {
+        self.free[i] = 0;
       }
     }
+    self.nfree = numeric.sum(self.free);
     //degrees of freedom
-    self.dof = self.nvals - self.npars;
+    self.dof = self.nvals - self.nfree;
   }
 
   //calculates the residuals from the  y-values and the model/params
@@ -150,10 +156,31 @@ function Minimizer(model, data, initialParams, options) {
     // sig^2 = r(p)T * r(p) / (m -n) , m=# of obs, n = #of free params
     var totalError, dof, r;
 
-    dof = self.nvals - self.npars;
     r = self.residuals(self.params);
-    totalError = numeric.dot(r, r) / dof;
+    totalError = numeric.dot(r, r) / self.dof;
     return totalError;
+  };
+
+  self.where = function (arr, target) {
+    var dim, 
+        indices =[];
+    dim = numeric.dim(arr);
+    if (dim.length === 1) {
+      for (var i=0; i<dim[0]; i++) {
+        if (arr[i] === target) {
+          indices.push(i);
+        }
+      }
+    } else if (dim.length === 2) {
+      for (var i=0; i<dim[0]; i++) {
+        for (var j=0; j<dim[1]; j++) {
+          if (arr[i][j] == target) {
+            indices.push([i, j]);
+          }
+        }
+      }
+    }
+    return indices;
   };
 
   self.jacobian = function(params) {
@@ -166,7 +193,6 @@ function Minimizer(model, data, initialParams, options) {
         modParamsHigh,
         modParamsLow, 
         left, right;
-
     for (var i=0; i<params.length; i++) {
       modParamsLow = params.slice(0);
       modParamsHigh = params.slice(0);
@@ -175,20 +201,21 @@ function Minimizer(model, data, initialParams, options) {
       modParamsLow[i] = params[i] - h;
       modParamsHigh[i] = params[i] + h;
       for (var j=0; j<self.xvals.length; j++) {
-        //fix the jacobian to be 0.0 if the parameter is fixed
         left = self.model(self.xvals[j], modParamsHigh);
         right = self.model(self.xvals[j], modParamsLow);
         fjac[j][i] = (left - right) / (2*h);
       }
     }
-
-    if (self.fitterOptions.parInfo) {
-      for (var i=0; i<params.length; i++) {
-        if (self.fitterOptions.parInfo[i].fixed) {
-
+    var tmp = numeric.rep([self.xvals.length, self.nfree],0);
+    for (var i=0, k=0; i<self.params.length; i++) {
+      if (self.free[i]) {
+        for (var j=0; j<self.xvals.length; j++) {
+          tmp[j][k] = fjac[j][i];
         }
+        k++;
       }
     }
+
     //update the number of times jac has been calculated
     self.numJac++;
 
@@ -223,7 +250,7 @@ function Minimizer(model, data, initialParams, options) {
   self.lmStep = function (params) {
     var newParams, 
         jac, jacTrans, jtj, jtjInv, identity,
-        diag, cost_gradient, g, delta, t;
+        diag, cost_gradient, g, delta, t, allParams =[];
     jac = self.jacobian(params);
     jacTrans = numeric.transpose(jac);
     jtj = numeric.dot(jacTrans, jac);
@@ -234,7 +261,6 @@ function Minimizer(model, data, initialParams, options) {
     // t = numeric.add(jtj, numeric.mul(self.lambda, identity));
     // console.log(numeric.prettyPrint(g));
     // console.log(numeric.prettyPrint(t));
-    console.log(g, numeric.inv(g))
     delta = numeric.dot(numeric.inv(g), cost_gradient);
     
     //need to limit the step size? 
@@ -245,9 +271,20 @@ function Minimizer(model, data, initialParams, options) {
     }
 
     // delta = numeric.mul(delta, 1.0)
-    console.log(delta)
     newParams = numeric.add(params, delta);
-    // console.log(params, newParams)
+    console.log(params, newParams, delta)
+
+    //stitch back in any fixed parameters
+
+    // for (var i=0, k=0; i<self.initialParams.length; i++) {
+    //   if (!self.free[i]) { 
+    //     allParams.push(self.initialParams[i]);
+    //   } else {
+    //     allParams.push(newParams[k]);
+    //     k++;
+    //   }
+    // }
+    // console.log(self.initialParams, allParams)
     return newParams;
   };
 
@@ -255,7 +292,7 @@ function Minimizer(model, data, initialParams, options) {
     //TODO? Not sure if needed
   };
 
-  //perform the minimization iteratively
+  //perform the minimization iteratively  
   self.iterate = function (params) {
     var cost, newCost, newParams;
 
@@ -276,7 +313,6 @@ function Minimizer(model, data, initialParams, options) {
       self.lambda *= self.lambdaPlus;
       newParams = self.lmStep(params);
       newCost = 0.5 * self.ssr(newParams);
-      console.log(cost, newCost, params, newParams)
     }
     
     return newParams;

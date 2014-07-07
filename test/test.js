@@ -122,7 +122,7 @@ var generatePointsData = function(data, model, p0, params) {
 // createChart({"data":generatePointsData(data, exponential, p0, fit.params), element:"#chart1"});
 
 
-p0 = [10.0, 100.0, 1.0];
+p0 = [10.0, 1000.0, 0.5];
 var npoints = 100;
 xvals = numeric.linspace(0,10, npoints);
 clean = xvals.map(function(d, i){return exponential(d, p0);});
@@ -133,7 +133,7 @@ data2 = [
          yvals,
         ];
 
-p0 = [ 40.0, yvals[0], 0.5]
+p0 = [ 40.0, yvals[0], 1.0]
 var start = new Date().getTime();var start = new Date().getTime();
 var minimizer = new Minimizer(exponential, data2, p0, {'debug': false, parInfo: [{'name': 'C'}, {'name': 'A'}, {'name': 'k'}] });
 var fit2 = minimizer.fit();
@@ -159,7 +159,7 @@ data3 = [
          yvals,
         ];
 var t1 = new Date()
-p0 = [1.0, 6.0, 1.3];
+p0 = [4.0, 4.0, 1.3];
 var parInfo = [{name: 'C', fixed: true}, {'name': 'A', fixed:false}, {'name': 'w', fixed:false}];
 var minimizer = new Minimizer(sine, data3, p0, {'debug': false, parInfo:parInfo});
 var fit3 = minimizer.fit();
