@@ -2,21 +2,33 @@
 
 var gulp = require('gulp'),
   livereload = require('gulp-livereload'),
-  browserify = require('gulp-browserify');
+  browserify = require('gulp-browserify'), 
+  jade = require('gulp-jade'), 
+  stylus = require('gulp-stylus');
 
 gulp.task('watch', function () {
-  gulp.watch(['src/**'], ['build']);
+  gulp.watch(['src/**', 'test/**'], ['build']);
 });
 
-gulp.task('browserify', function() {
-  browserify()
-    .pipe()
-})
+// gulp.task('browserify', function() {
+//   browserify()
+//     .pipe()
+// });
 
-gulp.task('build', function () {
-  return gulp.src('src/minimizer.js')
-    .pipe(browserify())
-    .pipe(gulp.dest('build/'))
+gulp.task('stylusdev', [], function () {
+  return gulp.src('./test/*.styl')
+    .pipe(stylus())
+    .pipe(gulp.dest('test'));
+});
+
+gulp.task('jade', ['stylusdev'], function () {
+  return gulp.src("./test/*.jade")
+    .pipe(jade({pretty:true, locals: {min: ''}}))
+    .pipe(gulp.dest('test'));
+});
+
+gulp.task('build', ['jade'], function () {
+  return gulp.src('src/jsfit.js')
     .pipe(livereload())
 });
 

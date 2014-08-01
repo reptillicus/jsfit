@@ -1,29 +1,61 @@
+
 <html>
-<head>
-	<title>Test Page</title>
-	<script src="../src/numeric-1.2.6.js" type="text/javascript"></script>
-	<script src="../src/jsfit.js" type="text/javascript"></script>
-	<script type="text/javascript" src="../components/d3/d3.min.js"></script>
-	<script type="text/javascript" src="../components/nvd3/nv.d3.min.js"></script>
-	<script src="test.js" type="text/javascript"></script>
-	<link rel="stylesheet" type="text/css" href="../components/nvd3/src/nv.d3.css"></link>
-	<link rel="stylesheet" type="text/css" href="style.css"></link>
-</head>
-
-<body>
-	<!-- <div id="chart1" class="chart">
-		<svg></svg>
-	</div> -->
-	<div id="chart2" class="chart">
-		<svg></svg>
-	</div>
-	<h2> Sine A*sin(w*x)
-	<div id="chart3" class="chart">
-		<svg></svg>
-	</div>
-
-
-</body>
+  <head>
+    <title>Test Page</title>
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+      }); 
+    </script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../src/numeric-1.2.6.js"></script>
+    <script type="text/javascript" src="../src/jsfit.js"></script>
+    <script type="text/javascript" src="../components/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="../components/d3/d3.min.js"></script>
+    <script type="text/javascript" src="../components/nvd3/nv.d3.min.js"></script>
+    <script type="text/javascript" src="../components/angular/angular.js"></script>
+    <script type="text/javascript" src="../components/angular-ui-router/release/angular-ui-router.js"></script>
+    <script type="text/javascript" src="../components/angular-bootstrap/ui-bootstrap.js"></script>
+    <script type="text/javascript" src="../components/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="test.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="../components/bootstrap/dist/css/bootstrap.css"/>
+    <link rel="stylesheet" type="text/css" href="../components/nvd3/src/nv.d3.css"/>
+    <link rel="stylesheet" type="text/css" href="./test.css"/>
+  </head>
+  <body ng-app="app">
+    <nav role="navigation" class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header"><a href="#" class="navbar-brand">JSMin</a></div>
+      </div>
+    </nav>
+    <div ng-controller="fixedExponentialCtrl" class="container-fluid">
+      <div class="row-fluid">
+        <div class="row-fluid">
+          <h3>Exponential \( C + A \cdot e^{-k \cdot x} \)</h3>
+        </div>
+        <div class="row-fluid">
+          <h4>Initial Parameters</h4>
+          <form name="chart1Params" class="form-inline">
+            <div ng-repeat="par in p0" class="form-group">
+              <label>{{parInfo[$index].name}}</label>
+              <input type="number" disabled="disabled" ng-model="par" class="form-control"/>
+            </div>
+            <button ng-click="fit()" class="btn btn-info">Fit</button>
+          </form>
+          <h4>Final Best Fit Parameters</h4>
+          <form name="chart1FinalParams" class="form-inline">
+            <div ng-repeat="par in fit2.params" class="form-group">
+              <label>{{parInfo[$index].name}}</label>
+              <input type="number" disabled="disabled" ng-model="fit2.params[$index]" class="form-control"/>
+            </div>
+          </form>
+          <h4>Time Elapsed For Fitting</h4><span>{{fitTime}} ms</span>
+          <div id="chart2" class="chart">
+            <svg></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="http://localhost:35729/livereload.js"></script>
+  </body>
 </html>
-
-

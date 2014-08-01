@@ -1,8 +1,52 @@
+var app = angular.module('app', ['ui.router', 'ui.bootstrap']);
+
+app.config(function($stateProvider, $urlRouterProvider) {
+
+
+
+});
+
+app.controller('fixedExponentialCtrl', function($scope) {
+  p0 = [10.0, 1000.0, 0.5];
+  var npoints = 300;
+  xvals = numeric.linspace(0,10, npoints);
+  clean = xvals.map(function(d, i){return exponential(d, p0);});
+  noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.2), 0.1), 1.0);
+  yvals = numeric.mul(clean, noise);
+  weights = yvals.map(function (d) {return 1.0;});
+
+  // console.log(weights)
+  data2 = [ 
+           xvals, 
+           yvals,
+           weights
+          ];
+
+  $scope.p0 = [ 400.0, yvals[0], 1.0];
+  var start = new Date().getTime();
+  $scope.parInfo = [{'name': 'C', 'fixed':false}, {'name': 'A', 'fixed':false}, {'name': 'k'}];
+  var minimizer = new Minimizer(exponential, data2, $scope.p0, {'debug': false, parInfo: $scope.parInfo });
+  $scope.fit2 = minimizer.fit();
+  console.log($scope.fit2);
+  var end = new Date().getTime();
+  $scope.fitTime = end - start;
+  console.log("time2", $scope.fitTime);
+
+  createChart({"data":generatePointsData(data2, exponential, $scope.p0, $scope.fit2.params), element:"#chart2"});
+
+});
+
+
+
+
+
+
+
 function createChart (options) {
   var data = options.data;
   var element = options.element;
 
-  var crap = function() {
+  var chartMaker = function() {
     nv.addGraph(function() {
       var chart = nv.models.lineChart()
                     .margin({left: 100})  //Adjust chart margins to give the x-axis some breathing room.
@@ -28,7 +72,7 @@ function createChart (options) {
       return chart;
     });
   };
-  var ch = crap();
+  var ch = chartMaker();
   return ch;
 }
 
@@ -122,27 +166,6 @@ var generatePointsData = function(data, model, p0, params) {
 // createChart({"data":generatePointsData(data, exponential, p0, fit.params), element:"#chart1"});
 
 
-p0 = [10.0, 1000.0, 0.5];
-var npoints = 100;
-xvals = numeric.linspace(0,10, npoints);
-clean = xvals.map(function(d, i){return exponential(d, p0);});
-noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.2), 0.1), 1.0);
-yvals = numeric.mul(clean, noise);
-data2 = [ 
-         xvals, 
-         yvals,
-        ];
-
-p0 = [ 40.0, yvals[0], 1.0]
-var start = new Date().getTime();var start = new Date().getTime();
-var minimizer = new Minimizer(exponential, data2, p0, {'debug': false, parInfo: [{'name': 'C'}, {'name': 'A'}, {'name': 'k'}] });
-var fit2 = minimizer.fit();
-console.log(fit2)
-var end = new Date().getTime();
-var time = end - start;
-console.log("time2", time);
-
-createChart({"data":generatePointsData(data2, exponential, p0, fit2.params), element:"#chart2"});
 
 //
 // Decaying exponential

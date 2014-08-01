@@ -1,0 +1,50 @@
+html
+  head
+    title Test Page
+    script(type="text/x-mathjax-config").
+      MathJax.Hub.Config({
+        tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+      }); 
+    script(type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML")
+    script(type="text/javascript" src="../src/numeric-1.2.6.js")
+    script(type="text/javascript" src="../src/jsfit.js")
+    script(type="text/javascript" src="../components/jquery/dist/jquery.min.js")
+    script(type="text/javascript" src="../components/d3/d3.min.js")
+    script(type="text/javascript" src="../components/nvd3/nv.d3.min.js")
+    script(type="text/javascript" src="../components/angular/angular.js")
+    script(type="text/javascript" src="../components/angular-ui-router/release/angular-ui-router.js")
+    script(type="text/javascript" src="../components/angular-bootstrap/ui-bootstrap.js")
+    script(type="text/javascript" src="../components/bootstrap/dist/js/bootstrap.js")
+    script(src="test.js" type="text/javascript")
+    link(rel="stylesheet" type="text/css" href="../components/bootstrap/dist/css/bootstrap.css")
+    link(rel="stylesheet" type="text/css" href="../components/nvd3/src/nv.d3.css")
+    link(rel="stylesheet" type="text/css" href="./test.css")
+
+  body(ng-app="app")
+    nav(class="navbar navbar-default" role="navigation")
+      .container-fluid
+        .navbar-header
+          a(class="navbar-brand" href="#") JSMin
+    //- div(ui-view)
+    .container-fluid(ng-controller="fixedExponentialCtrl")
+      .row-fluid
+        .row-fluid 
+          h3 Exponential \( C + A \cdot e^{-k \cdot x} \)
+        .row-fluid
+          h4 Initial Parameters
+          form.form-inline(name="chart1Params")
+            .form-group(ng-repeat = "par in p0")
+              label {{parInfo[$index].name}}
+              input.form-control(type="number", disabled, ng-model="par")
+            button.btn.btn-info(ng-click="fit()") Fit
+          h4 Final Best Fit Parameters
+          form.form-inline(name="chart1FinalParams")
+            .form-group(ng-repeat = "par in fit2.params")
+              label {{parInfo[$index].name}}
+              input.form-control(type="number", disabled, ng-model="fit2.params[$index]")
+          h4 Time Elapsed For Fitting
+          span {{fitTime}} ms
+          div.chart(id="chart2")
+            svg
+
+    script(src="http://localhost:35729/livereload.js")

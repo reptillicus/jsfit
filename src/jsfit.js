@@ -3,92 +3,16 @@
 function Minimizer(model, data, initialParams, options) {
   //make a copy to keep around inside the methods. 
   var self = this;
-  //the smallest possible delta due to floating point precision.
-  self.epsilon = numeric.epsilon*100;
-  //store the x values on self
-  self.xvals = data[0];
-  //store the y values on self
-  self.yvals = data[1];
-  //number of observations
-  self.nvals = self.xvals.length;
-  //the weights array, if it exists. If not, set all points to have unit weights
-  if (data.length < 3) {
-    self.weights = numeric.rep([self.nvals], 1.0);
-  } else { 
-    self.weights = data[2];
-  }
-  //store the parameters on self
-  self.params = initialParams;
-  //set the initial params
-  self.initialParams = initialParams;
-  //the number of parameters
-  self.npars = initialParams.length;
-  //An array indicating if the parameter is free of fixed 
-  self.free = numeric.rep([self.npars], 1);
-  //the number of degrees of freedom
-  self.dof = self.nvals - self.nfree;
-  //the number of free parameters
-  self.nfree = self.params.length;
-  //store the function for the model on self
-  self.model = model;
-  
-  //the l-m damping parameter
-  self.lambda = 100.0;
-  //the lambda up paramaeter
-  self.lambdaPlus = 10.0;
-  //the lambda decrease parameter
-  self.lambdaMinus = 0.25;
-  //stopping reason
-  self.stopReason = null;
-  //number of jac calcs
-  self.numJac = 0;
-  //the reason for stopping
-  self.stopReason = null;
-  console.log(self.free)
-  //the default fitter options
-  var defaultOptions = {
-    maxIterations: 200, 
-    debug: false,
-    ftol :1e-10, 
-    chart: false,
-    paramDeltaConverge: 0.001,
-  };
-
-  if (self.xvals.length !== self.yvals.length) {
-    throw new Error('x and y values are different lengths');
-  }
-
-  //merge in any options that are passed in into the defaultOptions object
-  self.fitterOptions = defaultOptions;
-  for (var key in options) {
-    if (options.hasOwnProperty(key)) {
-      if (options[key] !== undefined) self.fitterOptions[key] = options[key];
-    }
-  }
-
-  //Make sure that parInfo, if it came through, is the same length as the 
-  //parameter array
-  if (self.fitterOptions.parInfo) {
-    if (self.fitterOptions.parInfo.length !== self.npars) {
-      throw new Error('parInfo and params must be SAME length');
-    }
-    for (var i=0; i<self.npars; i++) {
-      if (self.fitterOptions.parInfo[i].fixed) {
-        self.free[i] = 0;
-      }
-    }
-    self.nfree = numeric.sum(self.free);
-    //degrees of freedom
-    self.dof = self.nvals - self.nfree;
-  }
 
   //calculates the residuals from the  y-values and the model/params
   // r_i = 1/w_i * (y_i - model(x_i, params))
   self.residuals = function(params) {
-    var resid =[];
+
+    // var resid = [];
+    var resid = new Float32Array(self.xvals.length);
     for (var i=0; i<self.xvals.length; i++) {
       var val = (1/self.weights[i])*(self.yvals[i] - self.model(self.xvals[i], params));
-      resid.push(val);
+      resid[i] = val;
     }
     return resid;
   };
@@ -99,6 +23,19 @@ function Minimizer(model, data, initialParams, options) {
     ssr = numeric.dot(self.residuals(params), self.residuals(params));
     return ssr;
   };
+
+  self.chi2 = function (params) {
+    var chi2 = 0.0, 
+        obs, exp;
+
+    for (var i=0; i<self.xvals.length; i++) {
+      exp = self.model(self.xvals[i], params);
+      obs = self.yvals[i];
+      w = self.weights[i];
+      chi2 += Math.pow(((obs-exp)/(w)), 2);
+    }
+    return chi2;
+  }
 
   //passing in an m x n array, return an array with only the diagonals, all the rest are zeros
   self.diagonal = function (arr) {
@@ -146,10 +83,17 @@ function Minimizer(model, data, initialParams, options) {
 
   self.parameterErrors = function () {
     //should be just the diagonal elements of the covariance matrix
-    var covar, parameterErrors;
+    var covar, parameterErrors, out = numeric.rep([self.npars], 0.0)
     covar = self.covar();
     parameterErrors = numeric.sqrt(numeric.getDiag(covar));
-    return parameterErrors;
+    //Patch in the fixed parameters. . . 
+    for (var i=0, counter=0; i<self.free.length; i++) {
+      if (self.free[i]) {
+        out[i] = parameterErrors[counter];
+        counter++;
+      }
+    }
+    return out;
   };
 
   self.totalError = function() {
@@ -162,6 +106,9 @@ function Minimizer(model, data, initialParams, options) {
   };
 
   self.where = function (arr, target) {
+    /*
+      Helper method. returns the indices of the elements that match the target. 
+    */
     var dim, 
         indices =[];
     dim = numeric.dim(arr);
@@ -188,34 +135,32 @@ function Minimizer(model, data, initialParams, options) {
     // Jt•J is the approximation of the hessian
     //
     var h, 
-        fjac = numeric.rep([self.xvals.length, self.npars],0),
+        fjac = numeric.rep([self.xvals.length, self.ifree],0),
+        // fjac = [],
         origParams, 
         modParamsHigh,
         modParamsLow, 
-        left, right;
-    for (var i=0; i<params.length; i++) {
+        left, right, par_idx, col;
+
+    for (var i=0; i<self.ifree.length; i++) {
+      par_idx = self.ifree[i];
       modParamsLow = params.slice(0);
       modParamsHigh = params.slice(0);
       //Scale the step to the magnitude of the paramter
-      h = Math.abs(params[i] * self.epsilon);
-      modParamsLow[i] = params[i] - h;
-      modParamsHigh[i] = params[i] + h;
+      h = Math.abs(params[par_idx] * self.epsilon);
+      modParamsLow[par_idx] = params[par_idx] - h;
+      modParamsHigh[par_idx] = params[par_idx] + h;
+      col = new Float32Array(self.xvals.length);
       for (var j=0; j<self.xvals.length; j++) {
         left = self.model(self.xvals[j], modParamsHigh);
         right = self.model(self.xvals[j], modParamsLow);
         fjac[j][i] = (left - right) / (2*h);
+        // col[j] = (left - right) / (2*h);
       }
+      // fjac.push(col);
     }
-    var tmp = numeric.rep([self.xvals.length, self.nfree],0);
-    for (var i=0, k=0; i<self.params.length; i++) {
-      if (self.free[i]) {
-        for (var j=0; j<self.xvals.length; j++) {
-          tmp[j][k] = fjac[j][i];
-        }
-        k++;
-      }
-    }
-
+    
+    // console.log(fjac)
     //update the number of times jac has been calculated
     self.numJac++;
 
@@ -247,44 +192,37 @@ function Minimizer(model, data, initialParams, options) {
     return pars;
   };
 
-  self.lmStep = function (params) {
+  self.lmStep = function (params, jac) {
+    var t1 = new Date()
     var newParams, 
-        jac, jacTrans, jtj, jtjInv, identity,
-        diag, cost_gradient, g, delta, t, allParams =[];
-    jac = self.jacobian(params);
+        jacTrans, jtj, jtjInv, identity,
+        diag, cost_gradient, g, delta, t, 
+        allParams =[], 
+        allDelta = numeric.rep([self.npars], 0.0);
+
+    // jac = self.jacobian(params);
     jacTrans = numeric.transpose(jac);
     jtj = numeric.dot(jacTrans, jac);
     diag = self.diagonal(jtj);
+    // console.log(numeric.prettyPrint(jtj))
     // identity = numeric.identity(numeric.dim(jtj)[0]);
     cost_gradient = numeric.dot(jacTrans, self.residuals(params));
     g = numeric.add(jtj, numeric.mul(self.lambda, diag));
-    // t = numeric.add(jtj, numeric.mul(self.lambda, identity));
-    // console.log(numeric.prettyPrint(g));
-    // console.log(numeric.prettyPrint(t));
     delta = numeric.dot(numeric.inv(g), cost_gradient);
-    
-    //need to limit the step size? 
-    for (var i=0; i<params.length; i++) {
-      if (Math.abs(delta[i]) > 0.5 * Math.abs(params[i])) {
-        delta[i] *= 0.5*delta[i];
+
+    //Patch in the fixed parameters. . . 
+    for (var i=0, counter=0; i<self.free.length; i++) {
+      if (self.free[i]) {
+        allDelta[i] = delta[counter];
+        counter++;
       }
     }
-
+    
     // delta = numeric.mul(delta, 1.0)
-    newParams = numeric.add(params, delta);
-    console.log(params, newParams, delta)
-
-    //stitch back in any fixed parameters
-
-    // for (var i=0, k=0; i<self.initialParams.length; i++) {
-    //   if (!self.free[i]) { 
-    //     allParams.push(self.initialParams[i]);
-    //   } else {
-    //     allParams.push(newParams[k]);
-    //     k++;
-    //   }
-    // }
-    // console.log(self.initialParams, allParams)
+    newParams = numeric.add(params, allDelta);
+    // console.log(params, newParams, allDelta)
+    var t2 = new Date();
+    // console.log(t2-t1)
     return newParams;
   };
 
@@ -294,10 +232,12 @@ function Minimizer(model, data, initialParams, options) {
 
   //perform the minimization iteratively  
   self.iterate = function (params) {
-    var cost, newCost, newParams;
+    var cost, newCost, newParams, fjac;
+
+    fjac = self.jacobian(params);
 
     cost = 0.5 * self.ssr(params);
-    newParams = self.lmStep(params);
+    newParams = self.lmStep(params, fjac);
     //fix and params that are fixed or limited
     newParams = self.fixParameters(newParams);
     newCost = 0.5 * self.ssr(newParams);
@@ -311,8 +251,9 @@ function Minimizer(model, data, initialParams, options) {
     //the cost is greater
     while (newCost > cost) {
       self.lambda *= self.lambdaPlus;
-      newParams = self.lmStep(params);
+      newParams = self.lmStep(params, fjac);
       newCost = 0.5 * self.ssr(newParams);
+      // console.log(self.lambda, newParams, newCost)
     }
     
     return newParams;
@@ -364,8 +305,8 @@ function Minimizer(model, data, initialParams, options) {
               "hessian": self.hessian(),
               "jac": self.jacobian(self.params),
               "covar": self.covar(),
-              "chi2": self.ssr(self.params), 
-              "chi2_red": self.ssr(self.params)/self.dof,
+              "chi2": self.chi2(self.params), 
+              "chi2_red": self.chi2(self.params)/self.dof,
               "dof": self.dof, 
               "iterations":iterationNumber, 
               "stopReason":self.stopReason, 
@@ -376,4 +317,93 @@ function Minimizer(model, data, initialParams, options) {
               "numJac": self.numJac
            };
   };
+
+
+  self.init = function () {
+    //the smallest possible delta due to floating point precision.
+    self.epsilon = numeric.epsilon*100;
+    //store the x values on self
+    self.xvals = data[0];
+    //store the y values on self
+    self.yvals = data[1];
+    //number of observations
+    self.nvals = self.xvals.length;
+    //the weights array, if it exists. If not, set all points to have unit weights
+    if (data.length < 3) {
+      self.weights = numeric.rep([self.nvals], 1.0);
+    } else { 
+      self.weights = data[2];
+    }
+    //store the parameters on self
+    self.params = initialParams;
+    //set the initial params
+    self.initialParams = initialParams;
+    //the number of parameters
+    self.npars = initialParams.length;
+    //An array indicating if the parameter is free of fixed 
+    self.free = numeric.rep([self.npars], 1);
+    //the number of degrees of freedom
+    self.dof = self.nvals - self.nfree;
+    //the number of free parameters
+    self.nfree = self.params.length;
+    //store the function for the model on self
+    self.ifree = self.where(self.free, 1);
+    self.model = model;
+    
+    //the l-m damping parameter
+    self.lambda = 0.01;
+    //the lambda up paramaeter
+    self.lambdaPlus = 5.0;
+    //the lambda decrease parameter
+    self.lambdaMinus = 0.5;
+    //stopping reason
+    self.stopReason = null;
+    //number of jac calcs
+    self.numJac = 0;
+    //the reason for stopping
+    self.stopReason = null;
+    //the default fitter options
+    var defaultOptions = {
+      maxIterations: 200, 
+      debug: false,
+      ftol :1e-10, 
+      chart: false,
+      paramDeltaConverge: 0.001,
+    };
+
+    if (self.xvals.length !== self.yvals.length) {
+      throw new Error('x and y arrays are different lengths');
+    }
+
+    if (self.xvals.length !== self.weights.length) {
+      throw new Error('x and weights arrays are different lengths');
+    }
+
+    //merge in any options that are passed in into the defaultOptions object
+    self.fitterOptions = defaultOptions;
+    for (var key in options) {
+      if (options.hasOwnProperty(key)) {
+        if (options[key] !== undefined) self.fitterOptions[key] = options[key];
+      }
+    }
+
+    //Make sure that parInfo, if it came through, is the same length as the 
+    //parameter array
+    if (self.fitterOptions.parInfo) {
+      if (self.fitterOptions.parInfo.length !== self.npars) {
+        throw new Error('parInfo and params must be SAME length');
+      }
+      for (var i=0; i<self.npars; i++) {
+        if (self.fitterOptions.parInfo[i].fixed) {
+          self.free[i] = 0;
+        }
+      }
+      self.nfree = numeric.sum(self.free);
+      //degrees of freedom
+      self.dof = self.nvals - self.nfree;
+    }
+    self.ifree = self.where(self.free, 1);
+  };
+
+  self.init();
 }
