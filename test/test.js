@@ -1,7 +1,27 @@
-var app = angular.module('app', ['ui.router', 'ui.bootstrap']);
+var app = angular.module('app', ['ui.router']);
 
 app.config(function($stateProvider, $urlRouterProvider) {
+  $urlRouterProvider.otherwise("/");
+  $stateProvider
+    .state('main', {
+      url: "/",
+      templateUrl: "views/main.html", 
+      controller: function($scope) {
+        console.log("Hello")
+        $scope.items=[1,2,3];
+      }
+    })
 
+    .state('examples', {
+      abstract: true, 
+      url: "/examples", 
+      template: '<div ui-view>'
+    })
+      .state('examples.example1', {
+        url: '/example1',
+        templateUrl: "views/exponential1.html",
+        controller: 'fixedExponentialCtrl'
+      });
 
 
 });
@@ -13,7 +33,7 @@ app.controller('fixedExponentialCtrl', function($scope) {
   clean = xvals.map(function(d, i){return exponential(d, p0);});
   noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.2), 0.1), 1.0);
   yvals = numeric.mul(clean, noise);
-  weights = yvals.map(function (d) {return 1.0;});
+  weights = yvals.map(function (d) {return d/10;});
 
   // console.log(weights)
   data2 = [ 
@@ -22,22 +42,47 @@ app.controller('fixedExponentialCtrl', function($scope) {
            weights
           ];
 
-  $scope.p0 = [ 400.0, yvals[0], 1.0];
-  var start = new Date().getTime();
+  $scope.p0 = [ {value:400.0}, {value:yvals[0]}, {value:1.0} ];
   $scope.parInfo = [{'name': 'C', 'fixed':false}, {'name': 'A', 'fixed':false}, {'name': 'k'}];
-  var minimizer = new Minimizer(exponential, data2, $scope.p0, {'debug': false, parInfo: $scope.parInfo });
-  $scope.fit2 = minimizer.fit();
-  console.log($scope.fit2);
-  var end = new Date().getTime();
-  $scope.fitTime = end - start;
-  console.log("time2", $scope.fitTime);
+  par0 = $scope.p0.map(function(p) {return p.value});
+  var minimizer = new Minimizer(exponential, data2, par0, {'debug': false, parInfo: $scope.parInfo });
 
-  createChart({"data":generatePointsData(data2, exponential, $scope.p0, $scope.fit2.params), element:"#chart2"});
+  $scope.fit = function() {
+    var start = new Date().getTime();
+    $scope.fitobj = minimizer.fit();
+    var end = new Date().getTime();
+    $scope.fitTime = end - start;
+    par0 = $scope.p0.map(function(p) {return p.value});
+    createChart({"data":generatePointsData(data2, exponential, par0, $scope.fitobj.params), element:"#chart2"});
+  };
+
+  $scope.fit();
 
 });
 
+// app.controller('fixedSineCtrl', function($scope) {
 
+//   p0 = [0.0, 10.0, 1.0];
+//   var npoints = 100;
+//   xvals = numeric.linspace(0,10, npoints);
+//   clean = xvals.map(function(d, i){return sine(d, p0);});
+//   noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.1), 0.05), 1.0);
+//   yvals = numeric.mul(clean, noise);
+//   data3 = [ 
+//            xvals, 
+//            yvals,
+//           ];
+//   var t1 = new Date()
+//   p0 = [4.0, 4.0, 1.3];
+//   var parInfo = [{name: 'C', fixed: true}, {'name': 'A', fixed:false}, {'name': 'w', fixed:false}];
+//   var minimizer = new Minimizer(sine, data3, p0, {'debug': false, parInfo:parInfo});
+//   var fit3 = minimizer.fit();
+//   console.log(fit3);
+//   var t2 = new Date();
+//   console.log(t2-t1)
 
+//   createChart({"data":generatePointsData(data3, sine, p0, fit3.params), element:"#chart3"});
+// });
 
 
 
@@ -171,26 +216,6 @@ var generatePointsData = function(data, model, p0, params) {
 // Decaying exponential
 //
 
-p0 = [0.0, 10.0, 1.0];
-var npoints = 100;
-xvals = numeric.linspace(0,10, npoints);
-clean = xvals.map(function(d, i){return sine(d, p0);});
-noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.1), 0.05), 1.0);
-yvals = numeric.mul(clean, noise);
-data3 = [ 
-         xvals, 
-         yvals,
-        ];
-var t1 = new Date()
-p0 = [4.0, 4.0, 1.3];
-var parInfo = [{name: 'C', fixed: true}, {'name': 'A', fixed:false}, {'name': 'w', fixed:false}];
-var minimizer = new Minimizer(sine, data3, p0, {'debug': false, parInfo:parInfo});
-var fit3 = minimizer.fit();
-console.log(fit3);
-var t2 = new Date();
-console.log(t2-t1)
-
-createChart({"data":generatePointsData(data3, sine, p0, fit3.params), element:"#chart3"});
 
 
 

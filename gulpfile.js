@@ -22,7 +22,7 @@ gulp.task('stylusdev', [], function () {
 });
 
 gulp.task('jade', ['stylusdev'], function () {
-  return gulp.src("./test/*.jade")
+  return gulp.src("./test/**/*.jade")
     .pipe(jade({pretty:true, locals: {min: ''}}))
     .pipe(gulp.dest('test'));
 });

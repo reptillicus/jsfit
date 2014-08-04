@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Page</title>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+      }); 
+    </script>
+    <script type="text/javascript" src="../src/numeric-1.2.6.js"></script>
+    <script type="text/javascript" src="../src/jsfit.js"></script>
+    <script type="text/javascript" src="../components/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="../components/d3/d3.min.js"></script>
+    <script type="text/javascript" src="../components/nvd3/nv.d3.min.js"></script>
+    <script type="text/javascript" src="../components/angular/angular.js"></script>
+    <script type="text/javascript" src="../components/angular-ui-router/release/angular-ui-router.js"></script>
+    <script type="text/javascript" src="../components/angular-bootstrap/ui-bootstrap.js"></script>
+    <script type="text/javascript" src="../components/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="test.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="../components/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../components/nvd3/src/nv.d3.css">
+    <link rel="stylesheet" type="text/css" href="./test.css">
+  </head>
+  <body ng-app="app">
+    <nav role="navigation" class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header"><a href="#" class="navbar-brand">JSMin</a></div>
+      </div>
+    </nav>
+    <div class="container-fluid">
+      <div ui-view></div>
+    </div>
+    <script src="http://localhost:35729/livereload.js"></script>
+  </body>
+</html>
