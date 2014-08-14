@@ -1,30 +1,19 @@
 .row-fluid
   .col-md-12
     .row-fluid 
-      h3(mathjax) Exponential $ f(x) = C + A \cdot e^{-k \cdot x} $
+    h3(mathjax) Sinusoidal with fixed amplitude $ f(t) = C + A \cdot \sin({\omega \cdot t}) $
     .row-fluid
       h4 Initial Parameters
-    .row-fluid
       form.form-inline(name="chart1Params")
         .form-group(ng-repeat = "par in p0")
           label {{parInfo[$index].name}}
           input.form-control(type="number", ng-model="par.value", step="any", ng-blur="fit()")
         button.btn.btn-info(ng-click="fit()") Fit
-    .row-fluid
       h4 Final Best Fit Parameters
-    .row-fluid
       form.form-inline(name="chart1FinalParams")
         .form-group(ng-repeat = "par in fitobj.params")
           label {{parInfo[$index].name}}
           input.form-control(type="number", disabled, ng-model="fitobj.params[$index]")
-    .row-fluid
-      h4 Parameter Errors
-    .row-fluid
-      form.form-inline(name="chart1FinalParams")
-        .form-group(ng-repeat = "par in fitobj.parameterErrors")
-          label {{parInfo[$index].name}}
-          input.form-control(type="number", disabled, ng-model="fitobj.parameterErrors[$index]")
-
       ul.list-inline
         li
           h4 Elasped time 
@@ -32,6 +21,9 @@
         li
           h4 Iterations
           span {{fitobj.iterations}}
+        li
+          h4 Parameter Errors
+          span {{fitobj.parameterErrors}}
         li
           h4(mathjax) $\chi^2_{red}$
           span {{fitobj.chi2red}}

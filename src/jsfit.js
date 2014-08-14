@@ -1,4 +1,7 @@
 // "use strict"
+var toType = function(obj) {
+  return ({}).toString.call(obj).match(/\s([a-zA-Z0-9]+)/)[1].toLowerCase();
+};
 
 function Minimizer(model, data, initialParams, options) {
   //make a copy to keep around inside the methods. 
@@ -32,10 +35,10 @@ function Minimizer(model, data, initialParams, options) {
       exp = self.model(self.xvals[i], params);
       obs = self.yvals[i];
       w = self.weights[i];
-      chi2 += Math.pow(((obs-exp)/(w)), 2);
+      chi2 += Math.pow((obs-exp), 2) / Math.pow(w, 2);
     }
     return chi2;
-  }
+  };
 
   //passing in an m x n array, return an array with only the diagonals, all the rest are zeros
   self.diagonal = function (arr) {
@@ -77,13 +80,13 @@ function Minimizer(model, data, initialParams, options) {
     var hes, covar;
     hes = self.hessian();
     covar = numeric.inv(hes);
-    covar = numeric.mul(covar, self.totalError());
+    if (!self.weightedFit) covar = numeric.mul(covar, self.totalError());
     return covar;
   };
 
   self.parameterErrors = function () {
     //should be just the diagonal elements of the covariance matrix
-    var covar, parameterErrors, out = numeric.rep([self.npars], 0.0)
+    var covar, parameterErrors, out = numeric.rep([self.npars], 0.0);
     covar = self.covar();
     parameterErrors = numeric.sqrt(numeric.getDiag(covar));
     //Patch in the fixed parameters. . . 
@@ -154,7 +157,7 @@ function Minimizer(model, data, initialParams, options) {
       for (var j=0; j<self.xvals.length; j++) {
         left = self.model(self.xvals[j], modParamsHigh);
         right = self.model(self.xvals[j], modParamsLow);
-        fjac[j][i] = (left - right) / (2*h);
+        fjac[j][i] = (left - right) / (2*h) / self.weights[j];
         // col[j] = (left - right) / (2*h);
       }
       // fjac.push(col);
@@ -193,7 +196,6 @@ function Minimizer(model, data, initialParams, options) {
   };
 
   self.lmStep = function (params, jac) {
-    var t1 = new Date()
     var newParams, 
         jacTrans, jtj, jtjInv, identity,
         diag, cost_gradient, g, delta, t, 
@@ -221,8 +223,6 @@ function Minimizer(model, data, initialParams, options) {
     // delta = numeric.mul(delta, 1.0)
     newParams = numeric.add(params, allDelta);
     // console.log(params, newParams, allDelta)
-    var t2 = new Date();
-    // console.log(t2-t1)
     return newParams;
   };
 
@@ -268,11 +268,16 @@ function Minimizer(model, data, initialParams, options) {
         oldSSR,
         converge,
         ssr = self.ssr(paramEstimate), 
-        paramErrors;
+        paramErrors,
+        t1 = new Date();
 
+    //reset lambda each time a new fit is called? 
+    self.lambda = 0.01;
+    self.params = self.initialParams;
 
     for (var i=0; i<self.fitterOptions.maxIterations; i++) {
       iterationNumber++;
+      if (i===0) console.log(self.params);
       oldParams = self.params;
       oldSSR = self.ssr(oldParams);
       self.params = self.iterate(oldParams);
@@ -306,7 +311,7 @@ function Minimizer(model, data, initialParams, options) {
               "jac": self.jacobian(self.params),
               "covar": self.covar(),
               "chi2": self.chi2(self.params), 
-              "chi2_red": self.chi2(self.params)/self.dof,
+              "chi2red": self.chi2(self.params)/self.dof,
               "dof": self.dof, 
               "iterations":iterationNumber, 
               "stopReason":self.stopReason, 
@@ -314,7 +319,8 @@ function Minimizer(model, data, initialParams, options) {
               "xvals": self.xvals, 
               "yvals": self.yvals,
               "residuals": self.residuals(self.params),
-              "numJac": self.numJac
+              "numJac": self.numJac, 
+              "time": new Date() - t1
            };
   };
 
@@ -324,15 +330,38 @@ function Minimizer(model, data, initialParams, options) {
     self.epsilon = numeric.epsilon*100;
     //store the x values on self
     self.xvals = data[0];
+    if (toType(self.yvals) !== 'float32array') {
+      var tx = new Float32Array(self.xvals.length);
+      for (var i=0;i<self.xvals.length;i++){
+        tx[i] = self.xvals[i];
+      }
+      self.xvals = tx;
+    }
     //store the y values on self
     self.yvals = data[1];
+    if (toType(self.yvals) !== 'float32array') {
+      var ty = new Float32Array(self.yvals.length);
+      for (var i=0;i<self.yvals.length;i++){
+        ty[i] = self.yvals[i];
+      }
+      self.yvals = ty;
+    }
     //number of observations
     self.nvals = self.xvals.length;
     //the weights array, if it exists. If not, set all points to have unit weights
     if (data.length < 3) {
+      self.weightedFit = false;
       self.weights = numeric.rep([self.nvals], 1.0);
     } else { 
       self.weights = data[2];
+      self.weightedFit = true;
+    }
+    if (toType(self.weights) !== 'float32array') {
+      var tw = new Float32Array(self.weights.length);
+      for (var i=0;i<self.yvals.length;i++){
+        tw[i] = self.weights[i];
+      }
+      self.weights = tw;
     }
     //store the parameters on self
     self.params = initialParams;
@@ -353,9 +382,9 @@ function Minimizer(model, data, initialParams, options) {
     //the l-m damping parameter
     self.lambda = 0.01;
     //the lambda up paramaeter
-    self.lambdaPlus = 5.0;
+    self.lambdaPlus = 10.0;
     //the lambda decrease parameter
-    self.lambdaMinus = 0.5;
+    self.lambdaMinus = 0.25;
     //stopping reason
     self.stopReason = null;
     //number of jac calcs

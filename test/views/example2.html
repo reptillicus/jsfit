@@ -1,13 +1,10 @@
 
 <div class="row-fluid">
   <div class="col-md-12">
-    <div class="row-fluid">
-      <h3 mathjax="mathjax">Exponential $ f(x) = C + A \cdot e^{-k \cdot x} $</h3>
-    </div>
+    <div class="row-fluid"></div>
+    <h3 mathjax="mathjax">Sinusoidal with fixed amplitude $ f(t) = C + A \cdot \sin({\omega \cdot t}) $</h3>
     <div class="row-fluid">
       <h4>Initial Parameters</h4>
-    </div>
-    <div class="row-fluid">
       <form name="chart1Params" class="form-inline">
         <div ng-repeat="par in p0" class="form-group">
           <label>{{parInfo[$index].name}}</label>
@@ -15,26 +12,11 @@
         </div>
         <button ng-click="fit()" class="btn btn-info">Fit</button>
       </form>
-    </div>
-    <div class="row-fluid">
       <h4>Final Best Fit Parameters</h4>
-    </div>
-    <div class="row-fluid">
       <form name="chart1FinalParams" class="form-inline">
         <div ng-repeat="par in fitobj.params" class="form-group">
           <label>{{parInfo[$index].name}}</label>
           <input type="number" disabled="disabled" ng-model="fitobj.params[$index]" class="form-control"/>
-        </div>
-      </form>
-    </div>
-    <div class="row-fluid">
-      <h4>Parameter Errors</h4>
-    </div>
-    <div class="row-fluid">
-      <form name="chart1FinalParams" class="form-inline">
-        <div ng-repeat="par in fitobj.parameterErrors" class="form-group">
-          <label>{{parInfo[$index].name}}</label>
-          <input type="number" disabled="disabled" ng-model="fitobj.parameterErrors[$index]" class="form-control"/>
         </div>
       </form>
       <ul class="list-inline">
@@ -43,6 +25,9 @@
         </li>
         <li>
           <h4>Iterations</h4><span>{{fitobj.iterations}}</span>
+        </li>
+        <li>
+          <h4>Parameter Errors</h4><span>{{fitobj.parameterErrors}}</span>
         </li>
         <li>
           <h4 mathjax="mathjax">$\chi^2_{red}$</h4><span>{{fitobj.chi2red}}</span>

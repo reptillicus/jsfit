@@ -1,0 +1,42 @@
+.row-fluid
+  .col-md-12
+    .row-fluid
+      h3 Introduction
+      p(mathjax) JsMin is loosly based on the mpfit python package for non-linear least square optimization problems. The
+       | goal of the fitter is to minimize the $\chi^2$ between the model and the data points by varying the parameters using 
+       | the Levenberg-Marquardt algorithm.
+    .row-fluid
+      p(mathjax).
+        The Levenberg-Marquardt algoritm iteritively solves non-linear least squares problems by solving the following matrix equation
+
+        $$\boldsymbol{\beta}^{i+1} = \boldsymbol{\beta}^{i} + (\mathbf J^{\mathbf T} \mathbf J + 
+        \lambda \mathrm diag (\mathbf J^{\mathbf T}\mathbf J)^{-1}\mathbf J^{\mathbf T} \mathbf r$$
+
+        where $\boldsymbol{\beta}$ is the vector of free parameters in the model, $\mathbf{J}$ is the Jacobian
+        matrix, $\lambda$ is a damping parameter that is adjusted during each iteration, and $\mathbf{r}$ is the
+        residuals vector, defined as
+
+        $$ r_i = y_i - f(x_i; \boldsymbol{\beta}) $$
+
+    .row-fluid
+      h4 What the fitter returns
+      div(hljs).
+          {
+            "params": \\The parameters that best fit the model
+            "parameterErrors": \\Estimates of the errors on the parameters
+            "parInfo": \\The parInfo array of objects that was used
+            "hessian": \\The Hessian matrix
+            "jac": \\The Jacobian of the last iteration
+            "covar": \\Covariance matrix
+            "chi2": \\The Chi^2
+            "chi2red": \\The reduced Chi^2
+            "dof": \\Number of degrees of freedom, 
+            "iterations": \\Total number of iterations, 
+            "stopReason": \\The reason for stopping, 
+            "initialParams": \\the initial parameters used in the fit,
+            "xvals": \\An array of all the x values, 
+            "yvals": \\An array of all the y values,
+            "residuals": \\An array of the residuals,
+            "numJac": \\The number of times the jacobian was calculated, 
+            "time": \\Total run time for the fitting
+          };

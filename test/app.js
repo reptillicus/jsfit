@@ -1,4 +1,8 @@
-var app = angular.module('app', ['ui.router']);
+var app = angular.module('app', ['ui.router', 'hljs'])
+
+app.run(function($rootScope) {
+  $rootScope.$on('$routeChangeStart', MathJax.Hub.Queue(["Typeset",MathJax.Hub]));
+});
 
 app.config(function($stateProvider, $urlRouterProvider) {
   $urlRouterProvider.otherwise("/");
@@ -20,69 +24,21 @@ app.config(function($stateProvider, $urlRouterProvider) {
       .state('examples.example1', {
         url: '/example1',
         templateUrl: "views/exponential1.html",
-        controller: 'fixedExponentialCtrl'
-      });
-
-
+        controller: 'example1Ctrl'
+      })
+      .state('examples.example2', {
+        url: '/example2',
+        templateUrl: "views/example2.html",
+        controller: 'example2Ctrl'
+      })
+    .state('readme',  {
+      'url': '/readme', 
+      templateUrl: 'views/readme.html'
+    });
 });
 
-app.controller('fixedExponentialCtrl', function($scope) {
-  p0 = [10.0, 1000.0, 0.5];
-  var npoints = 300;
-  xvals = numeric.linspace(0,10, npoints);
-  clean = xvals.map(function(d, i){return exponential(d, p0);});
-  noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.2), 0.1), 1.0);
-  yvals = numeric.mul(clean, noise);
-  weights = yvals.map(function (d) {return d/10;});
 
-  // console.log(weights)
-  data2 = [ 
-           xvals, 
-           yvals,
-           weights
-          ];
 
-  $scope.p0 = [ {value:400.0}, {value:yvals[0]}, {value:1.0} ];
-  $scope.parInfo = [{'name': 'C', 'fixed':false}, {'name': 'A', 'fixed':false}, {'name': 'k'}];
-  par0 = $scope.p0.map(function(p) {return p.value});
-  var minimizer = new Minimizer(exponential, data2, par0, {'debug': false, parInfo: $scope.parInfo });
-
-  $scope.fit = function() {
-    var start = new Date().getTime();
-    $scope.fitobj = minimizer.fit();
-    var end = new Date().getTime();
-    $scope.fitTime = end - start;
-    par0 = $scope.p0.map(function(p) {return p.value});
-    createChart({"data":generatePointsData(data2, exponential, par0, $scope.fitobj.params), element:"#chart2"});
-  };
-
-  $scope.fit();
-
-});
-
-// app.controller('fixedSineCtrl', function($scope) {
-
-//   p0 = [0.0, 10.0, 1.0];
-//   var npoints = 100;
-//   xvals = numeric.linspace(0,10, npoints);
-//   clean = xvals.map(function(d, i){return sine(d, p0);});
-//   noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.1), 0.05), 1.0);
-//   yvals = numeric.mul(clean, noise);
-//   data3 = [ 
-//            xvals, 
-//            yvals,
-//           ];
-//   var t1 = new Date()
-//   p0 = [4.0, 4.0, 1.3];
-//   var parInfo = [{name: 'C', fixed: true}, {'name': 'A', fixed:false}, {'name': 'w', fixed:false}];
-//   var minimizer = new Minimizer(sine, data3, p0, {'debug': false, parInfo:parInfo});
-//   var fit3 = minimizer.fit();
-//   console.log(fit3);
-//   var t2 = new Date();
-//   console.log(t2-t1)
-
-//   createChart({"data":generatePointsData(data3, sine, p0, fit3.params), element:"#chart3"});
-// });
 
 
 
@@ -165,7 +121,7 @@ var generatePointsData = function(data, model, p0, params) {
   yvals = data[1];
 
   for (var i = 0; i < data[0].length; i++) {
-    points.push({x:xvals[i] , y: yvals[i]});
+    points.push({x:xvals[i], y: yvals[i]});
     line.push({x: xvals[i], y: model(xvals[i], params)});
     initial.push({x: xvals[i], y: model(xvals[i], p0)});
   }
@@ -188,33 +144,6 @@ var generatePointsData = function(data, model, p0, params) {
     }
   ];
 };
-
-
-
-
-// var data = [
-//         [1, 2, 3, 4, 5, 6, 7, 8],
-//         [8.3, 11.0, 14.7, 19.7, 26.7, 35.2, 44.4, 55.9]
-//        ];
-// var p0 = [1.0, 1.0, 0.2];
-
-
-// var minimizer = new Minimizer(exponential, data, p0, {'debug': false, parInfo: [{'name': 'C'}, {'name': 'A'}, {'name': 'k'}] });
-// var start = new Date().getTime();
-// var fit = minimizer.fit();
-// console.log(fit)
-// var end = new Date().getTime();
-// var time = end - start;
-
-// console.log("time", time)
-
-// createChart({"data":generatePointsData(data, exponential, p0, fit.params), element:"#chart1"});
-
-
-
-//
-// Decaying exponential
-//
 
 
 
