@@ -370,10 +370,10 @@ function Minimizer(model, data, initialParams, options) {
     self.npars = initialParams.length;
     //An array indicating if the parameter is free of fixed 
     self.free = numeric.rep([self.npars], 1);
-    //the number of degrees of freedom
-    self.dof = self.nvals - self.nfree;
     //the number of free parameters
     self.nfree = self.params.length;
+    //the number of degrees of freedom
+    self.dof = self.nvals - self.nfree;
     //store the function for the model on self
     self.ifree = self.where(self.free, 1);
     self.model = model;

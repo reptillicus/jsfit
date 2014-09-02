@@ -78,9 +78,5 @@ app.controller('interactiveCtrl', function ($scope) {
            weights
           ];
 
-  $scope.$watch('fitobj', function(newVal) {
-    // console.log(newVal)
-  }, true);
-
 
 });

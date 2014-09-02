@@ -101,12 +101,6 @@ function linear(x, params) {
   return (m*x + b);
 }
 
-function decay(x, params) {
-  A = params[0];
-  k = params[1];
-  return A + (Math.sin(3*x));
-}
-
 function sine(x, params) {
   C = params[0];
   A = params[1];

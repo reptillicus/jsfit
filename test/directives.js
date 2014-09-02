@@ -16,7 +16,6 @@ app.directive('interactiveChart', function () {
       "fitobj": "=",
     },
     link: function (scope, elem, attrs) {
-      console.log(elem)
       var data = d3.zip(scope.data[0], scope.data[1], scope.data[2]);
       var par0 = [1,1,1];
       var minimizer = new Minimizer(sine, data, par0);
@@ -43,7 +42,8 @@ app.directive('interactiveChart', function () {
       var brush = d3.svg.brush()
           .x(xscale)
           .y(yscale)
-          .on("brush", brushed);
+          .on("brush", brushed)
+          .on('brushend', brushend);
 
       var svg = d3.select(elem[0]).append("svg")
           .attr("width", width)
@@ -110,7 +110,7 @@ app.directive('interactiveChart', function () {
         par0 = [1, data[1][0], 1];
         var minimizer = new Minimizer(exponential, data, par0);
         var fitobj = minimizer.fit();
-        scope.fitobj = angular.copy(fitobj);
+        scope.fitobj = fitobj;
         var tmp = d3.transpose(scope.data);
         var lineData = tmp.map(function (d) {
           return [d[0], exponential(d[0], fitobj.params)];
@@ -122,13 +122,10 @@ app.directive('interactiveChart', function () {
         scope.$apply();
       }
 
-      // function brushended() {
-      //   if (!d3.event.sourceEvent) return; // only transition after input
-      //   d3.select(this).transition()
-      //       .duration(brush.empty() ? 0 : 750)
-      //       .call(brush.extent(defaultExtent))
-      //       .call(brush.event);
-      // }
+      function brushend() {
+        if (!d3.event.sourceEvent) return; // only transition after input
+        // console.log(point.filter(function (d) {return d.selected;}));
+      }
 
       // Find the nodes within the specified rectangle.
       function search(quadtree, x0, y0, x3, y3) {
