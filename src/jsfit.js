@@ -277,7 +277,6 @@ function Minimizer(model, data, initialParams, options) {
 
     for (var i=0; i<self.fitterOptions.maxIterations; i++) {
       iterationNumber++;
-      if (i===0) console.log(self.params);
       oldParams = self.params;
       oldSSR = self.ssr(oldParams);
       self.params = self.iterate(oldParams);

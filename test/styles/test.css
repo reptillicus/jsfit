@@ -8,3 +8,22 @@
 .chart g.nv-series-0 path.nv-line {
   stroke-opacity: 0;
 }
+.point {
+  fill: #72a2eb;
+  stroke: #020e9e;
+}
+.point.selected {
+  fill: #db69eb;
+  fill-opacity: 1;
+  stroke: #a52a2a;
+}
+.brush .extent {
+  stroke: #fff;
+  fill-opacity: 0.125;
+  shape-rendering: crispEdges;
+}
+.best-fit-line {
+  stroke: #00d6ff;
+  stroke-width: 3;
+  fill: none;
+}

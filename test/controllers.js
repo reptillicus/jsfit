@@ -61,3 +61,26 @@ app.controller('example2Ctrl', function($scope) {
 
   $scope.fit();
 });
+
+
+app.controller('interactiveCtrl', function ($scope) {
+  npoints = 400;
+  p0 = [10.0, 1000.0, 0.5];
+  xvals = numeric.linspace(0,10, npoints);
+  clean = xvals.map(function(d, i){return exponential(d, p0);});
+  noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.2), 0.1), 1.0);
+  yvals = numeric.mul(clean, noise);
+  weights = yvals.map(function (d) {return d/40;});
+
+  $scope.data = [ 
+           xvals, 
+           yvals,
+           weights
+          ];
+
+  $scope.$watch('fitobj', function(newVal) {
+    // console.log(newVal)
+  }, true);
+
+
+});

@@ -26,7 +26,7 @@ gulp.task('watch', function () {
 // });
 
 gulp.task('stylusdev', [], function () {
-  return gulp.src('./test/*.styl')
+  return gulp.src('./test/**/*.styl')
     .pipe(stylus())
     .pipe(gulp.dest('test'));
 });
