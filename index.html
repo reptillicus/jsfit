@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Page</title>
+    <script src="http://yandex.st/highlightjs/8.0/highlight.min.js"></script>
+    <script>
+      hljs.initHighlightingOnLoad();
+      
+    </script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+      });
+      MathJax.Hub.Configured();
+      
+    </script>
+    <script type="text/javascript" src="http://www.cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+    <script type="text/javascript" src="components/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="components/d3/d3.min.js"></script>
+    <script type="text/javascript" src=".components/nvd3/nv.d3.min.js"></script>
+    <script type="text/javascript" src="components/angular/angular.js"></script>
+    <script type="text/javascript" src="components/angular-ui-router/release/angular-ui-router.js"></script>
+    <script type="text/javascript" src="http://pc035860.github.io/angular-highlightjs/angular-highlightjs.min.js"></script>
+    <script type="text/javascript" src="components/angular-bootstrap/ui-bootstrap.js"></script>
+    <script type="text/javascript" src="components/bootstrap/dist/js/bootstrap.js"></script>
+    <script type="text/javascript" src="../src/jsfit.js"></script>
+    <script type="text/javascript" src="app/app.js"></script>
+    <script type="text/javascript" src="app/controllers.js"></script>
+    <script type="text/javascript" src="app/directives.js"></script>
+    <link rel="stylesheet" type="text/css" href="components/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="components/nvd3/src/nv.d3.css">
+    <link rel="stylesheet" type="text/css" href="app/styles/app.css">
+    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.0/styles/tomorrow.min.css">
+  </head>
+  <body ng-app="app">
+    <nav role="navigation" class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header"><a href="#" class="navbar-brand">JSMin</a></div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="dropdown"><a href="" data-toggle="dropdown" class="dropdown-toggle">Examples</a>
+              <ul class="dropdown-menu">
+                <li><a ui-sref="examples.example1">Exponential</a></li>
+                <li> <a ui-sref="examples.example2">Sine wave with fixed amplitude</a></li>
+                <li> <a ui-sref="examples.interactive">Interactive fitting</a></li>
+              </ul>
+            </li>
+            <li><a ui-sref="readme">Read Me</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container-fluid">
+      <div ui-view></div>
+    </div>
+    <script src="http://localhost:35729/livereload.js"></script>
+  </body>
+</html>

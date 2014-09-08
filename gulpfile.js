@@ -15,7 +15,7 @@ var gulp = require('gulp'),
   stylus = require('gulp-stylus');
 
 gulp.task('watch', function () {
-  gulp.watch(['./app/**', './index.jade'], ['jade']);
+  gulp.watch(['./app/**', './index.jade'], ['build']);
 });
 
 
@@ -31,7 +31,7 @@ gulp.task('jade', ['stylusdev'], function () {
     .pipe(gulp.dest('app'));
 });
 
-gulp.task('index', ['jade'], function () {
+gulp.task('build', ['jade'], function () {
   return gulp.src("./index.jade")
     .pipe(jade({pretty:true, locals: {min: ''}}))
     .pipe(gulp.dest('.'));
