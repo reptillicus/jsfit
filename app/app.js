@@ -9,10 +9,9 @@ app.config(function($stateProvider, $urlRouterProvider) {
   $stateProvider
     .state('main', {
       url: "/",
-      templateUrl: "views/main.html", 
+      templateUrl: "app/views/main.html", 
       controller: function($scope) {
-        console.log("Hello")
-        $scope.items=[1,2,3];
+        // $scope.items=[1,2,3];
       }
     })
 
@@ -23,17 +22,17 @@ app.config(function($stateProvider, $urlRouterProvider) {
     })
       .state('examples.example1', {
         url: '/example1',
-        templateUrl: "views/exponential1.html",
+        templateUrl: "app/views/exponential1.html",
         controller: 'example1Ctrl'
       })
       .state('examples.example2', {
         url: '/example2',
-        templateUrl: "views/example2.html",
+        templateUrl: "app/views/example2.html",
         controller: 'example2Ctrl'
       })
       .state('examples.interactive', {
         url: '/interactive', 
-        templateUrl: "views/interactive.html", 
+        templateUrl: "app/views/interactive.html", 
         controller: 'interactiveCtrl'
       })
     .state('readme',  {

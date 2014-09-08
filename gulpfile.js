@@ -34,7 +34,8 @@ gulp.task('jade', ['stylusdev'], function () {
 gulp.task('build', ['jade'], function () {
   return gulp.src("./index.jade")
     .pipe(jade({pretty:true, locals: {min: ''}}))
-    .pipe(gulp.dest('.'));
+    .pipe(gulp.dest('.'))
+    .pipe(livereload());
 });
 
 // gulp.task('build', ['jade'], function () {
