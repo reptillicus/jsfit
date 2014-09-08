@@ -37,7 +37,7 @@ app.config(function($stateProvider, $urlRouterProvider) {
       })
     .state('readme',  {
       'url': '/readme', 
-      templateUrl: 'views/readme.html'
+      templateUrl: 'app/views/readme.html'
     });
 });
 
