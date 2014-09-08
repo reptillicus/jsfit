@@ -1,0 +1,65 @@
+
+<div class="row-fluid">
+  <div class="col-md-12">
+    <div class="row-fluid"> 
+      <h3 mathjax="mathjax">Exponential $ f(x) = C + A \cdot e^{-k \cdot x} $</h3>
+    </div>
+    <div class="row-fluid">
+      <div class="row-fluid">
+        <h4>Final Best Fit Parameters</h4>
+      </div>
+      <div class="row-fluid">
+        <form name="finalParams" class="form-inline">
+          <div ng-repeat="par in fitobj.params" class="form-group">
+            <label>{{parInfo[$index].name}}</label>
+            <input type="number" disabled="disabled" ng-model="fitobj.params[$index]" class="form-control"/>
+          </div>
+        </form>
+      </div>
+      <div class="row-fluid">
+        <h4>Parameter Errors</h4>
+      </div>
+      <div class="row-fluid">
+        <form name="paramErrors" class="form-inline">
+          <div ng-repeat="par in fitobj.parameterErrors" class="form-group">
+            <label>{{parInfo[$index].name}}</label>
+            <input type="number" disabled="disabled" ng-model="fitobj.parameterErrors[$index]" class="form-control"/>
+          </div>
+        </form>
+        <ul class="list-inline">
+          <li>
+            <h4>Elasped time </h4><span>{{fitobj.time}} ms</span>
+          </li>
+          <li>
+            <h4>Iterations</h4><span>{{fitobj.iterations}}</span>
+          </li>
+          <li>
+            <h4 mathjax="mathjax">$\chi^2_{red}$</h4><span>{{fitobj.chi2red}}</span>
+          </li>
+          <li> 
+            <h4>Number of points</h4><span>{{fitobj.yvals.length}}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="row-fluid">
+      <div class="col-md-12">
+        <interactive-chart data="data" fitobj="fitobj"></interactive-chart>
+      </div>
+    </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>xval</th>
+          <th>yval</th>
+          <th>weight</th>
+        </tr>
+      </thead>
+      <tr ng-repeat="d in xvals">
+        <td>{{xvals[$index]}}</td>
+        <td>{{yvals[$index]}}</td>
+        <td>{{weights[$index]}}</td>
+      </tr>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,46 @@
+.row-fluid
+  .col-md-12
+    .row-fluid 
+       h3(mathjax) Exponential $ f(x) = C + A \cdot e^{-k \cdot x} $
+    .row-fluid
+      .row-fluid
+        h4 Final Best Fit Parameters
+      .row-fluid
+        form.form-inline(name="finalParams")
+          .form-group(ng-repeat = "par in fitobj.params")
+            label {{parInfo[$index].name}}
+            input.form-control(type="number", disabled, ng-model="fitobj.params[$index]")
+      .row-fluid
+        h4 Parameter Errors
+      .row-fluid
+        form.form-inline(name="paramErrors")
+          .form-group(ng-repeat = "par in fitobj.parameterErrors")
+            label {{parInfo[$index].name}}
+            input.form-control(type="number", disabled, ng-model="fitobj.parameterErrors[$index]")
+
+        ul.list-inline
+          li
+            h4 Elasped time 
+            span {{fitobj.time}} ms
+          li
+            h4 Iterations
+            span {{fitobj.iterations}}
+          li
+            h4(mathjax) $\chi^2_{red}$
+            span {{fitobj.chi2red}}
+          li 
+            h4 Number of points
+            span {{fitobj.yvals.length}}
+    .row-fluid
+      .col-md-12
+        interactive-chart(data="data", fitobj="fitobj")
+    table.table
+      thead
+        tr
+          th xval
+          th yval
+          th weight
+      tr(ng-repeat = "d in xvals")
+        td {{xvals[$index]}}
+        td {{yvals[$index]}}
+        td {{weights[$index]}}
