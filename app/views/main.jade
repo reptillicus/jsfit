@@ -6,9 +6,10 @@
         h4 How to include jsfit
         p jsfit makes heavy use of the numeric.js library, which must be included before including the jsfit file.
         div(hljs).
-          <script type="text/javascript" src="../src/numeric-1.2.6.js"></script>
-          <script type="text/javascript" src="../src/jsfit.js"></script>
+          <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.js"></script>
+          <script type="text/javascript" src="http://josephmeiring.github.io/jsfit/src/jsfit.js"></script>
       .row-fluid
+        p Check out the examples on this page, but here is the basic recipe for using jsfit. 
         div(hljs).
           //define a function that we will use as the model to minimize
           //The function must accept a single x value, and an array of parameters

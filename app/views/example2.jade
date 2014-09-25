@@ -1,7 +1,13 @@
 .row-fluid
   .col-md-12
     .row-fluid 
-      h3(mathjax) Sine wave $ f(x) = C + A \cdot \sin{\omega \cdot t} $
+      h3(mathjax) Sine wave 
+      h3(mathjax) $ f(x) = C + A \cdot \sin{\omega \cdot t} $
+      h4 In this example, the amplitude (A) of the sinusoidal function is held fixed to its inital value. The other parameters are however free to vary. 
+         | This is done by passing a parInfo Array into the fitter, such as this: 
+
+      div(hljs).
+        parInfo = [{'name': 'C', 'fixed':false}, {'name': 'A', 'fixed':true}, {'name': 'w'}];
     .row-fluid
       h4 Initial Parameters
     .row-fluid
