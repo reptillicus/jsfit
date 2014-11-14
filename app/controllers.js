@@ -49,14 +49,14 @@ app.controller('example2Ctrl', function($scope) {
   // $scope.weights = $scope.data[2];
 
   $scope.p0 = [ {value:20.0}, {value:80.0}, {value:4.3}, {value:0.5} ];
-  $scope.parInfo = [{'name': 'C', 'fixed':false}, {'name': 'A', 'fixed':false}, {'name': 'mu'}, {'name':'sigma', 'fixed':false }];
+  $scope.parInfo = [{'name': 'C', 'fixed':true}, {'name': 'A', 'fixed':false}, {'name': 'mu'}, {'name':'sigma', 'fixed':false }];
   
 
   $scope.fit = function() {
     par0 = $scope.p0.map(function(p) {return p.value});
     var minimizer = new Minimizer(gaussian, $scope.data, par0, {'debug': false, parInfo: $scope.parInfo });
     $scope.fitobj = minimizer.fit();
-    createChart({"data":generatePointsData($scope.data, gaussian, par0, $scope.fitobj.params), element:"#chart2"});
+    createChart({"data":generatePointsData($scope.data, gaussian, par0, $scope.fitobj.params), element:"#chart2", yRange:[0, 150]});
   };
 
   $scope.fit();

@@ -59,8 +59,11 @@ function createChart (options) {
                     .transitionDuration(350)  //how fast do you want the lines to transition?
                     .showLegend(true)       //Show the legend, allowing users to turn on/off line series.
                     .showYAxis(true)        //Show the y-axis
-                    .showXAxis(true)        //Show the x-axis
+                    .showXAxis(true)  //Show the x-axis
       ;
+      if (options.yRange) {
+        chart.forceY(options.yRange);
+      }
 
       chart.xAxis     //Chart x-axis settings
           .tickFormat(d3.format(',r'));

@@ -1,15 +1,33 @@
 
 <div class="row-fluid">
   <div class="col-md-12">
-    <div class="row-fluid"> 
-      <h3 mathjax="mathjax">Exponential </h3>
-      <h3 mathjax="mathjax">$ f(x) = C + A \cdot e^{-k \cdot x} $</h3>
-      <h4>
-        This is a basic example of fitting an Exponential function with a constant baseline. All parameters are free to
-        vary. The blue line is the initial guess of the  parameters, and the green line the model best fitting parameters. Change 
-        any of the parameters  and the fitting will be run again (will update on blur).
-      </h4>
+    <div class="row-fluid">
+      <div class="col-md-6">
+        <div class="row-fluid">
+          <h3 mathjax="mathjax">$ f(x) = C + A \cdot e^{-k \cdot x} $</h3>
+          <div hljs="hljs">
+            function exponential(x, params) {
+              var C = params[0], 
+                  A = params[1], 
+                  k = params[2];
+              return (C + A * Math.exp(-k * x));
+            }
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="row-fluid">
+          <h1>Exponential </h1>
+          <h4>
+            This is a basic example of fitting an Exponential function with a constant baseline. All parameters are free to
+            vary. The blue line is the initial guess of the  parameters, and the green line the model best fitting parameters. Change 
+            any of the parameters  and the fitting will be run again (will update on blur). 
+          </h4>
+        </div>
+      </div>
     </div>
+  </div>
+  <div class="col-md-12">
     <div class="row-fluid">
       <h4>Initial Parameters</h4>
     </div>

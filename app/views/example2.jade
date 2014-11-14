@@ -1,13 +1,30 @@
 .row-fluid
   .col-md-12
-    .row-fluid 
-      h3(mathjax) Gaussian function
-      h3(mathjax) $ f(x) =A \cdot e^{\frac{(x - \mu)^2}{2c^2}} + C $
-      h4 In this example, the baseline (C) of the gaussian function is held fixed to its inital value. The other parameters are however free to vary. 
-         | This is done by passing a parInfo Array into the fitter, such as this: 
+    .row-fluid
+      .col-md-6
+        h3(mathjax) $ f(x) =A \cdot e^{\frac{(x - \mu)^2}{2c^2}} + C $
+        div(hljs).
+          function gaussian(x, params) {
+            C = params[0];
+            A = params[1];
+            mu = params[2];
+            sig = params[3];
+            return C + A*Math.exp(-(Math.pow(x - mu, 2))/(2 * Math.pow(sig, 2)));
+          }
+      .col-md-6
+        h1(mathjax) Gaussian function
 
-      div(hljs).
-        parInfo = [{'name': 'C', 'fixed':true}, {'name': 'A', 'fixed':false}, {'name': 'mu', 'fixed':false}, {'name': 'sigma', 'fixed':false}];
+        h4().
+           Sometimes we need to fix a parameter when fitting. Without modifying the underlying data model, we can hold parameters fixed furing the fit. 
+           In this example, the baseline (C) of the gaussian function is held fixed to its inital value. The other parameters are however free to vary. 
+           This is done by passing a parInfo Array into the fitter, such as this: 
+
+        div(hljs).
+          parInfo = [{'name': 'C', 'fixed':true}, 
+                     {'name': 'A', 'fixed':false}, 
+                     {'name': 'mu', 'fixed':false}, 
+                     {'name': 'sigma', 'fixed':false}];
+  .col-md-12
     .row-fluid
       h4 Initial Parameters
     .row-fluid

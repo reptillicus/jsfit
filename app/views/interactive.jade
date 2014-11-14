@@ -1,10 +1,22 @@
 .row-fluid
   .col-md-12
     .row-fluid
-      h2(mathjax) Exponential 
-      h3(mathjax) $ f(x) = C + A \cdot e^{-k \cdot x} $
-      h4 With jsfit, we can do some fancy analytics in the browser. Here we use D3 to build an interactive chart, with which we can 
-        | select our data points and fit in real time. Drag and brush over the chart to select points, the fit updates automagically. 
+      .col-md-6
+        h3(mathjax) $ f(x) = C + A \cdot e^{-k \cdot x} $
+        div(hljs).
+            function exponential(x, params) {
+              var C = params[0], 
+                  A = params[1], 
+                  k = params[2];
+              return (C + A * Math.exp(-k * x));
+            }
+      .col-md-6
+        h1 Exponential 
+        h4 With jsfit, we can do some fancy analytics in the browser. Here we use D3 to build an interactive chart, with which we can 
+          | select our data points and fit in real time. Drag and brush over the chart to select points, the fit updates automagically. 
+
+
+  .col-md-12
     .row-fluid
       .col-md-12
         .row-fluid
