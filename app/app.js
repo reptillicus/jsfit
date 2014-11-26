@@ -85,40 +85,7 @@ function createChart (options) {
 }
 
 
-function exponential(x, params) {
-  var C = params[0], 
-      A = params[1], 
-      k = params[2];
-  return (C + A * Math.exp(-k * x));
-}
 
-function flat(x, params) {
-  var k = params[0];
-  return k;
-}
-
-function linear(x, params) {
-  var m = params[0], 
-      b = params[1];
-  return (m*x + b);
-}
-
-function sine(x, params) {
-  C = params[0];
-  A = params[1];
-  w = params[2];
-  return C + A * Math.sin(w*x);
-}
-
-function gaussian(x, params) {
-  C = params[0];
-  A = params[1];
-  mu = params[2];
-  sig = params[3];
-
-  return C + A*Math.exp(-(Math.pow(x - mu, 2))/(2 * Math.pow(sig, 2)));
-
-}
 
 
 var generatePointsData = function(data, model, p0, params) {

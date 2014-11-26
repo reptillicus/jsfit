@@ -18,7 +18,6 @@ app.directive('interactiveChart', function () {
     link: function (scope, elem, attrs) {
       var data = d3.zip(scope.data[0], scope.data[1], scope.data[2]);
       var par0 = [1,1,1];
-      var minimizer = new Minimizer(sine, data, par0);
 
       var margin = {top: 20, right: 15, bottom: 60, left: 60},
           width = 1000 - margin.left - margin.right,
@@ -100,7 +99,7 @@ app.directive('interactiveChart', function () {
         point.classed("selected", function(d) { return d.selected; });
         var selected = point.filter(function (d) {return d.selected;}).data();
         var tmp = d3.transpose(selected);
-        if (selected.length > 0) {
+        if (selected.length > 3) {
           fit(tmp);
         }
         // delete fitobj;
@@ -108,12 +107,11 @@ app.directive('interactiveChart', function () {
 
       function fit (data) {
         par0 = [1, data[1][0], 1];
-        var minimizer = new Minimizer(exponential, data, par0);
-        var fitobj = minimizer.fit();
+        var fitobj  = jsfit.fit(jsfit.models.exponential, data, par0);
         scope.fitobj = fitobj;
         var tmp = d3.transpose(scope.data);
         var lineData = tmp.map(function (d) {
-          return [d[0], exponential(d[0], fitobj.params)];
+          return [d[0], jsfit.models.exponential(d[0], fitobj.params)];
         });
         d3.selectAll("path.best-fit-line").remove();
         main.append("path")

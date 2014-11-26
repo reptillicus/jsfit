@@ -1,6 +1,6 @@
 .row-fluid
   .col-md-12
-    h2 Chi squared minimization, in the browser!
+    h2 Non-linear least squares minimization, in the browser! 
     .well
       .row-fluid
         h4 How to include jsfit
@@ -27,7 +27,5 @@
           var data [ xvals, yvals];
           //p0 are the initial parameters
           var p0 = [1.0, 10.0];
-          //instantiate a new fitter
-          var fitter = new Minimizer(linear, data, p0);
-          //this is the results of the fitting
-          var fitobj = fitter.fit();
+          //the  fitobj is the results of the fitting
+          var fitobj = jsfit.fit(linear, data, p0);

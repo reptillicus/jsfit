@@ -15,7 +15,7 @@ var gulp = require('gulp'),
   stylus = require('gulp-stylus');
 
 gulp.task('watch', function () {
-  gulp.watch(['./app/**', './index.jade'], ['build']);
+  gulp.watch(['./app/**', './index.jade', './src/**'], ['build']);
 });
 
 

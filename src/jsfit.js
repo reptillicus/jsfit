@@ -1,11 +1,57 @@
 // "use strict"
+var jsfit = (typeof exports === "undefined")?(function jsfit() {}):(exports);
+if(typeof global !== "undefined") { global.jsfit = jsfit; }
+
+
+//some helper functions
 var toType = function(obj) {
   return ({}).toString.call(obj).match(/\s([a-zA-Z0-9]+)/)[1].toLowerCase();
 };
 
-function Minimizer(model, data, initialParams, options) {
+
+//some commonly used models.
+jsfit.models = {
+
+  exponential : function (x, params) {
+    var C = params[0], 
+        A = params[1], 
+        k = params[2];
+    return (C + A * Math.exp(-k * x));
+  },
+
+  flat : function (x, params) {
+    var k = params[0];
+    return k;
+  },
+
+  linear :  function (x, params) {
+    var m = params[0], 
+        b = params[1];
+    return (m*x + b);
+  },
+
+  sine : function (x, params) {
+    var C = params[0],
+        A = params[1],
+        w = params[2];
+    return C + A * Math.sin(w*x);
+  },
+
+  gaussian : function (x, params) {
+    var C = params[0],
+        A = params[1],
+        mu = params[2],
+        sig = params[3];
+    return C + A*Math.exp(-(Math.pow(x - mu, 2))/(2 * Math.pow(sig, 2)));
+  }
+
+};
+
+
+
+jsfit.fit = function (model, data, initialParams, options) {
   //make a copy to keep around inside the methods. 
-  var self = this;
+  var self = {};
 
   //calculates the residuals from the  y-values and the model/params
   // r_i = 1/w_i * (y_i - model(x_i, params))
@@ -260,7 +306,7 @@ function Minimizer(model, data, initialParams, options) {
   };
 
   //the main public method for the fitter. All other methods are really internal.
-  self.fit = function() {
+  self.runFitter = function() {
     var iterationNumber = 0, 
         paramEstimate = self.params,
         errorEstimate,
@@ -434,4 +480,5 @@ function Minimizer(model, data, initialParams, options) {
   };
 
   self.init();
-}
+  return self.runFitter();
+};
