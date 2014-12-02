@@ -1,0 +1,65 @@
+h3 balls
+.row-fluid
+  .col-md-12
+    .row-fluid
+      .col-md-6
+        h3(mathjax) $ f(x) = m\cdotx + b$
+        div(hljs).
+          function linear(x, params) {
+            m = params[0];
+            b = params[1];
+            return m*x + b;
+          }
+      .col-md-6
+        h1(mathjax) 
+        
+           
+  .col-md-12
+    .row-fluid
+      h4 Initial Parameters
+    .row-fluid
+      form.form-inline(name="chart1Params")
+        .form-group(ng-repeat = "par in p0")
+          label {{parInfo[$index].name}}
+          input.form-control(type="number", ng-model="par.value", step="any", ng-blur="fit()")
+        button.btn.btn-info(ng-click="fit()") Fit
+    .row-fluid
+      h4 Final Best Fit Parameters
+    .row-fluid
+      form.form-inline(name="chart1FinalParams")
+        .form-group(ng-repeat = "par in fitobj.params")
+          label {{parInfo[$index].name}}
+          input.form-control(type="number", disabled, ng-model="fitobj.params[$index]")
+    .row-fluid
+      h4 Parameter Errors
+    .row-fluid
+      form.form-inline(name="chart1FinalParams")
+        .form-group(ng-repeat = "par in fitobj.parameterErrors")
+          label {{parInfo[$index].name}}
+          input.form-control(type="number", disabled, ng-model="fitobj.parameterErrors[$index]")
+      {{fitobj}}
+      ul.list-inline
+        li
+          h4 Elasped time 
+          span {{fitobj.time}} ms
+        li
+          h4 Iterations
+          span {{fitobj.iterations}}
+        li
+          h4(mathjax) $\chi^2_{red}$
+          span {{fitobj.chi2red}}
+        li 
+          h4 Number of points
+          span {{fitobj.xvals.length}} 
+      div.chart(id="chart2")
+        svg
+      table.table
+        thead
+          tr
+            th xval
+            th yval
+            th weight
+        tr(ng-repeat = "d in xvals")
+          td {{xvals[$index]}}
+          td {{yvals[$index]}}
+          td {{weights[$index]}}

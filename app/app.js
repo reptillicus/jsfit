@@ -21,17 +21,22 @@ app.config(function($stateProvider, $urlRouterProvider) {
       template: '<div ui-view>'
     })
       .state('examples.example1', {
-        url: '/example1',
+        url: '/1',
+        templateUrl: "app/views/linearExample.html",
+        controller: 'linearExCtrl'
+      })
+      .state('examples.example2', {
+        url: '/2',
         templateUrl: "app/views/exponential1.html",
         controller: 'example1Ctrl'
       })
-      .state('examples.example2', {
-        url: '/example2',
+      .state('examples.example3', {
+        url: '/3',
         templateUrl: "app/views/example2.html",
         controller: 'example2Ctrl'
       })
-      .state('examples.interactive', {
-        url: '/interactive', 
+      .state('examples.example4', {
+        url: '/4', 
         templateUrl: "app/views/interactive.html", 
         controller: 'interactiveCtrl'
       })

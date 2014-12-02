@@ -1,0 +1,30 @@
+{
+  "name": "jsfit",
+  "version": "0.0.0",
+  "homepage": "https://github.com/josephmeiring/jsfit",
+  "authors": [
+    "Joe Meiring <josephmeiring@gmail.com>"
+  ],
+  "license": "None",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular-bootstrap": "~0.11.0",
+    "angular-ui-router": "~0.2.11",
+    "angular": "~1.3.4",
+    "bootstrap": "~3.2.0",
+    "d3": "~3.4.11",
+    "numericjs": "~1.2.6",
+    "nvd3": "~1.1.15-beta"
+  },
+  "resolutions": {
+    "angular": "~1.3.4"
+  }
+}

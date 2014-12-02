@@ -1,3 +1,30 @@
+app.controller('linearExCtrl', function($scope) {
+  p0 = [10.0, 10.0];
+  xvals = [1,2,3,4,5];
+  yvals = [1,2,3,4,5];
+
+  // console.log(weights)
+  $scope.data = [ 
+           xvals, 
+           yvals,
+          ];
+  $scope.xvals = $scope.data[0];
+  $scope.yvals = $scope.data[1];
+
+  $scope.p0 = [ {value:2.0}, {value:10.0}];
+  $scope.parInfo = [{'name': 'm', 'fixed':false}, {'name': 'b', 'fixed':false}];
+
+  $scope.fit = function() {
+    var par0 = $scope.p0.map(function(p) {return p.value;});
+    var opts = {'debug': false, parInfo: $scope.parInfo };
+    $scope.fitobj = jsfit.fit(jsfit.models.linear, $scope.data, par0, opts);
+    createChart({"data":generatePointsData($scope.data, jsfit.models.linear, par0, $scope.fitobj.params), element:"#chart2"});
+  };
+
+  $scope.fit();
+
+});
+
 app.controller('example1Ctrl', function($scope) {
   p0 = [10.0, 1000.0, 0.5];
   var npoints = 300;

@@ -48,10 +48,17 @@ jsfit.models = {
 };
 
 
-
 jsfit.fit = function (model, data, initialParams, options) {
   //make a copy to keep around inside the methods. 
   var self = {};
+
+  self.debugLog = function (args) {
+    if (self.fitterOptions.debug) {
+      for (var i=0;i<arguments.length;i++) {
+        console.log(numeric.prettyPrint(arguments[i]));
+      }
+    }
+  };
 
   //calculates the residuals from the  y-values and the model/params
   // r_i = 1/w_i * (y_i - model(x_i, params))
@@ -197,6 +204,7 @@ jsfit.fit = function (model, data, initialParams, options) {
       modParamsHigh = params.slice(0);
       //Scale the step to the magnitude of the paramter
       h = Math.abs(params[par_idx] * self.epsilon);
+      if (h === 0.0) h = self.epsilon;
       modParamsLow[par_idx] = params[par_idx] - h;
       modParamsHigh[par_idx] = params[par_idx] + h;
       col = new Float32Array(self.xvals.length);
@@ -212,7 +220,6 @@ jsfit.fit = function (model, data, initialParams, options) {
     // console.log(fjac)
     //update the number of times jac has been calculated
     self.numJac++;
-
     return fjac;
   };
 
@@ -245,18 +252,32 @@ jsfit.fit = function (model, data, initialParams, options) {
     var newParams, 
         jacTrans, jtj, jtjInv, identity,
         diag, cost_gradient, g, delta, t, 
-        allParams =[], 
+        allParams =[],
+        gdim,
         allDelta = numeric.rep([self.npars], 0.0);
 
     // jac = self.jacobian(params);
     jacTrans = numeric.transpose(jac);
     jtj = numeric.dot(jacTrans, jac);
     diag = self.diagonal(jtj);
-    // console.log(numeric.prettyPrint(jtj))
-    // identity = numeric.identity(numeric.dim(jtj)[0]);
     cost_gradient = numeric.dot(jacTrans, self.residuals(params));
     g = numeric.add(jtj, numeric.mul(self.lambda, diag));
+    self.debugLog("##### ITERATION " + self.iterationNumber + "#####")
+    self.debugLog("fjac", jac)
+    self.debugLog("jacTrans:", jacTrans)
+    self.debugLog("jtj:", jtj)
+    self.debugLog("g:", g)
+    gdim = numeric.dim(g)
+
+    //TODO: QR factorization? this just sets any zero elements in the 
+    // diagonals to be small but non-zero
+    for (var i=0; i<gdim[0]; i++) {
+      if (g[i][i] === 0.0) {
+        g[i][i] = self.epsilon;
+      }
+    }
     delta = numeric.dot(numeric.inv(g), cost_gradient);
+    // console.log(delta);
 
     //Patch in the fixed parameters. . . 
     for (var i=0, counter=0; i<self.free.length; i++) {
@@ -276,11 +297,25 @@ jsfit.fit = function (model, data, initialParams, options) {
     //TODO? Not sure if needed
   };
 
+  self.checkJacobian = function (jtrans) {
+    var sum;
+    for (var i=0;i<jtrans.length;i++) {
+      sum = numeric.sum(jtrans[i]);
+      self.debugLog("sum", sum)
+      if (sum === 0.0) {
+        return false;
+      }
+    }
+  };
+
   //perform the minimization iteratively  
   self.iterate = function (params) {
     var cost, newCost, newParams, fjac;
 
     fjac = self.jacobian(params);
+    jacTrans = numeric.transpose(fjac);
+    self.checkJacobian(jacTrans)
+    self.debugLog("iterate jacTrans:", jacTrans);
 
     cost = 0.5 * self.ssr(params);
     newParams = self.lmStep(params, fjac);
@@ -292,23 +327,21 @@ jsfit.fit = function (model, data, initialParams, options) {
       self.lambda *= self.lambdaMinus;
     } 
     // console.log(self.lambda, cost, newCost, params, newParams);
-
+    self.debugLog("iterate cost, newCost:", cost, newCost);
     //this is the inner loop, where we keep increasing the damping parameter if
     //the cost is greater
-    while (newCost > cost) {
+    while ((newCost > cost) && (!self.checkJacobian(jacTrans))) {
       self.lambda *= self.lambdaPlus;
       newParams = self.lmStep(params, fjac);
       newCost = 0.5 * self.ssr(newParams);
-      // console.log(self.lambda, newParams, newCost)
     }
     
     return newParams;
   };
 
-  //the main public method for the fitter. All other methods are really internal.
+  //the method for the fitter. All other methods are really internal.
   self.runFitter = function() {
-    var iterationNumber = 0, 
-        paramEstimate = self.params,
+    var paramEstimate = self.params,
         errorEstimate,
         oldParams,
         oldSSR,
@@ -320,17 +353,16 @@ jsfit.fit = function (model, data, initialParams, options) {
     //reset lambda each time a new fit is called? 
     self.lambda = 0.01;
     self.params = self.initialParams;
+    self.iterationNumber = 0;
 
     for (var i=0; i<self.fitterOptions.maxIterations; i++) {
-      iterationNumber++;
+      self.iterationNumber++;
       oldParams = self.params;
       oldSSR = self.ssr(oldParams);
       self.params = self.iterate(oldParams);
       ssr = self.ssr(self.params);
 
-      if (self.fitterOptions.debug) {
-        console.log("parEstimate", self.params, converge, ssr, iterationNumber, ssr-oldSSR);
-      }
+      
       //If the SSR is really small, that means we are getting a perfect fit, so stop
       if (ssr < self.fitterOptions.ftol) {
         self.stopReason = "ftol";
@@ -339,13 +371,16 @@ jsfit.fit = function (model, data, initialParams, options) {
 
       //check for convergence based on change in SSR over last iterations
       converge = Math.abs((ssr-oldSSR)/ssr);
-      if (converge < 1e-4){
+      self.debugLog("parEstimate", self.params, converge, ssr);
+      if (converge < 1e-10){
         self.stopReason = "convergence";
         break;
       }
 
+
+
     }
-    if (iterationNumber == self.fitterOptions.maxIterations) {
+    if (self.iterationNumber == self.fitterOptions.maxIterations) {
       self.stopReason = "maxIterations";
     }
     return {
@@ -358,7 +393,7 @@ jsfit.fit = function (model, data, initialParams, options) {
               "chi2": self.chi2(self.params), 
               "chi2red": self.chi2(self.params)/self.dof,
               "dof": self.dof, 
-              "iterations":iterationNumber, 
+              "iterations":self.iterationNumber, 
               "stopReason":self.stopReason, 
               "initialParams": self.initialParams,
               "xvals": self.xvals, 
@@ -425,7 +460,7 @@ jsfit.fit = function (model, data, initialParams, options) {
     self.model = model;
     
     //the l-m damping parameter
-    self.lambda = 0.01;
+    self.lambda = 0.1;
     //the lambda up paramaeter
     self.lambdaPlus = 10.0;
     //the lambda decrease parameter
