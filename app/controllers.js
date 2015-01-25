@@ -1,7 +1,7 @@
 app.controller('linearExCtrl', function($scope) {
   p0 = [10.0, 10.0];
   xvals = [1,2,3,4,5];
-  yvals = [1,2,3,4,5];
+  yvals = [2,3,4,5,6];
 
   // console.log(weights)
   $scope.data = [ 
@@ -16,7 +16,7 @@ app.controller('linearExCtrl', function($scope) {
 
   $scope.fit = function() {
     var par0 = $scope.p0.map(function(p) {return p.value;});
-    var opts = {'debug': false, parInfo: $scope.parInfo };
+    var opts = {'debug': true, parInfo: $scope.parInfo };
     $scope.fitobj = jsfit.fit(jsfit.models.linear, $scope.data, par0, opts);
     createChart({"data":generatePointsData($scope.data, jsfit.models.linear, par0, $scope.fitobj.params), element:"#chart2"});
   };

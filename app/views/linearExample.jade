@@ -3,7 +3,7 @@ h3 balls
   .col-md-12
     .row-fluid
       .col-md-6
-        h3(mathjax) $ f(x) = m\cdotx + b$
+        h3(mathjax) $ f(x) = m \cdot x + b$
         div(hljs).
           function linear(x, params) {
             m = params[0];
@@ -37,7 +37,6 @@ h3 balls
         .form-group(ng-repeat = "par in fitobj.parameterErrors")
           label {{parInfo[$index].name}}
           input.form-control(type="number", disabled, ng-model="fitobj.parameterErrors[$index]")
-      {{fitobj}}
       ul.list-inline
         li
           h4 Elasped time 

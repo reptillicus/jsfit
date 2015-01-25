@@ -139,7 +139,9 @@ jsfit.fit = function (model, data, initialParams, options) {
 
   self.parameterErrors = function () {
     //should be just the diagonal elements of the covariance matrix
-    var covar, parameterErrors, out = numeric.rep([self.npars], 0.0);
+    var covar, 
+        parameterErrors, 
+        out = numeric.rep([self.npars], 0.0);
     covar = self.covar();
     parameterErrors = numeric.sqrt(numeric.getDiag(covar));
     //Patch in the fixed parameters. . . 
@@ -207,17 +209,12 @@ jsfit.fit = function (model, data, initialParams, options) {
       if (h === 0.0) h = self.epsilon;
       modParamsLow[par_idx] = params[par_idx] - h;
       modParamsHigh[par_idx] = params[par_idx] + h;
-      col = new Float32Array(self.xvals.length);
       for (var j=0; j<self.xvals.length; j++) {
         left = self.model(self.xvals[j], modParamsHigh);
         right = self.model(self.xvals[j], modParamsLow);
-        fjac[j][i] = (left - right) / (2*h) / self.weights[j];
-        // col[j] = (left - right) / (2*h);
+        fjac[j][i] = ((left - right) / (2*h)) / self.weights[j];
       }
-      // fjac.push(col);
     }
-    
-    // console.log(fjac)
     //update the number of times jac has been calculated
     self.numJac++;
     return fjac;
@@ -231,11 +228,9 @@ jsfit.fit = function (model, data, initialParams, options) {
         if (self.fitterOptions.parInfo[k].limits) {
           if (pars[k] < self.fitterOptions.parInfo[k].limits[0]) {
             pars[k] = self.fitterOptions.parInfo[k].limits[0];
-            // pars[k] = self.initialParams[k];
           }
           if (pars[k] > self.fitterOptions.parInfo[k].limits[1]) {
             pars[k] = self.fitterOptions.parInfo[k].limits[1];
-            // pars[k] = self.initialParams[k]
           }
         }
 
@@ -246,6 +241,11 @@ jsfit.fit = function (model, data, initialParams, options) {
       }
     }
     return pars;
+  };
+
+
+  self.checkHessian = function (hess) {
+
   };
 
   self.lmStep = function (params, jac) {
@@ -262,7 +262,7 @@ jsfit.fit = function (model, data, initialParams, options) {
     diag = self.diagonal(jtj);
     cost_gradient = numeric.dot(jacTrans, self.residuals(params));
     g = numeric.add(jtj, numeric.mul(self.lambda, diag));
-    self.debugLog("##### ITERATION " + self.iterationNumber + "#####")
+    self.debugLog("##### ITERATION " + self.iterationNumber + " #####")
     self.debugLog("fjac", jac)
     self.debugLog("jacTrans:", jacTrans)
     self.debugLog("jtj:", jtj)
@@ -291,10 +291,6 @@ jsfit.fit = function (model, data, initialParams, options) {
     newParams = numeric.add(params, allDelta);
     // console.log(params, newParams, allDelta)
     return newParams;
-  };
-
-  self.guassNewtonStep = function (params) {
-    //TODO? Not sure if needed
   };
 
   self.checkJacobian = function (jtrans) {
@@ -372,7 +368,7 @@ jsfit.fit = function (model, data, initialParams, options) {
       //check for convergence based on change in SSR over last iterations
       converge = Math.abs((ssr-oldSSR)/ssr);
       self.debugLog("parEstimate", self.params, converge, ssr);
-      if (converge < 1e-10){
+      if (converge < self.fitterOptions.ftol){
         self.stopReason = "convergence";
         break;
       }
@@ -456,7 +452,6 @@ jsfit.fit = function (model, data, initialParams, options) {
     //the number of degrees of freedom
     self.dof = self.nvals - self.nfree;
     //store the function for the model on self
-    self.ifree = self.where(self.free, 1);
     self.model = model;
     
     //the l-m damping parameter

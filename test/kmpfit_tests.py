@@ -9,8 +9,8 @@ def linear_residuals(p, data):  # Residuals function needed by kmpfit
     a, b = p              # Parameters which are adjusted by kmpfit
     return (y - linear(p, x))
 
-d = numpy.array([1,2,3,4,5])
-v = numpy.array([1,2,3,4,5])
+d = numpy.array([1, 2, 3])
+v = numpy.array([1, 2, 3])
 
 paramsinitial = [10.0, 10.0]
 fitobj = kmpfit.Fitter(residuals=linear_residuals, data=(d,v))
