@@ -1,7 +1,7 @@
 app.controller('linearExCtrl', function($scope) {
   p0 = [10.0, 10.0];
   xvals = [1,2,3,4,5];
-  yvals = [2,3,4,5,6];
+  yvals = [1,2,3,4,5];
 
   // console.log(weights)
   $scope.data = [ 

@@ -9,6 +9,8 @@ var toType = function(obj) {
 };
 
 
+var pprint = numeric.prettyPrint;
+
 //some commonly used models.
 jsfit.models = {
 
@@ -93,11 +95,11 @@ jsfit.fit = function (model, data, initialParams, options) {
     return chi2;
   };
 
-  //passing in an m x n array, return an array with only the diagonals, all the rest are zeros
+  //passing in an m x n array, return an array with only the main diagonals, all the rest are zeros
   self.diagonal = function (arr) {
     var dim, out;
     dim = numeric.dim(arr);
-    out = numeric.rep(dim,0);
+    out = numeric.rep(dim, 0);
     for (var i=0; i<dim[0]; i++) {
       for (var j=0; j<dim[1]; j++) {
         if (i===j) {
@@ -108,16 +110,17 @@ jsfit.fit = function (model, data, initialParams, options) {
     return out;
   };
 
-  self.hessian = function () {
+  self.hessian = function (params) {
     // H = 2 * Jt•J
     var jac, jacTrans, hes;
-    jac = self.jacobian(self.params);
+    jac = self.jacobian(params);
     jacTrans = numeric.transpose(jac);
     hes = numeric.mul(2.0, numeric.dot(jacTrans, jac));
+    console.log("hes", hes)
     return hes;
   };
 
-  self.covar = function () {
+  self.covar = function (params) {
     /*
       If the minimisation uses the weighted least-squares function f_i = (Y(x, t_i) - y_i) / \sigma_i then the covariance matrix 
       above gives the statistical error on the best-fit parameters resulting from the Gaussian errors \sigma_i on 
@@ -131,7 +134,7 @@ jsfit.fit = function (model, data, initialParams, options) {
     */
 
     var hes, covar;
-    hes = self.hessian();
+    hes = self.hessian(params);
     covar = numeric.inv(hes);
     if (!self.weightedFit) covar = numeric.mul(covar, self.totalError());
     return covar;
@@ -170,17 +173,22 @@ jsfit.fit = function (model, data, initialParams, options) {
     var dim, 
         indices =[];
     dim = numeric.dim(arr);
+    indices = numeric.rep([arr.length], 0);
     if (dim.length === 1) {
       for (var i=0; i<dim[0]; i++) {
         if (arr[i] === target) {
-          indices.push(i);
+          indices[i] = true;
+        } else {
+          indices[j] = false;
         }
       }
     } else if (dim.length === 2) {
       for (var i=0; i<dim[0]; i++) {
         for (var j=0; j<dim[1]; j++) {
           if (arr[i][j] == target) {
-            indices.push([i, j]);
+            indices[i][j] = true;
+          } else {
+            indices[i][j] = false;
           }
         }
       }
@@ -193,22 +201,21 @@ jsfit.fit = function (model, data, initialParams, options) {
     // Jt•J is the approximation of the hessian
     //
     var h, 
-        fjac = numeric.rep([self.xvals.length, self.ifree],0),
+        fjac = numeric.rep([self.xvals.length, self.params.length],0),
         // fjac = [],
         origParams, 
         modParamsHigh,
         modParamsLow, 
         left, right, par_idx, col;
 
-    for (var i=0; i<self.ifree.length; i++) {
-      par_idx = self.ifree[i];
+    for (var i=0; i<self.params.length; i++) {
       modParamsLow = params.slice(0);
       modParamsHigh = params.slice(0);
       //Scale the step to the magnitude of the paramter
-      h = Math.abs(params[par_idx] * self.epsilon);
+      h = Math.abs(params[i] * self.epsilon);
       if (h === 0.0) h = self.epsilon;
-      modParamsLow[par_idx] = params[par_idx] - h;
-      modParamsHigh[par_idx] = params[par_idx] + h;
+      modParamsLow[i] = params[i] - h;
+      modParamsHigh[i] = params[i] + h;
       for (var j=0; j<self.xvals.length; j++) {
         left = self.model(self.xvals[j], modParamsHigh);
         right = self.model(self.xvals[j], modParamsLow);
@@ -244,7 +251,17 @@ jsfit.fit = function (model, data, initialParams, options) {
   };
 
 
-  self.checkHessian = function (hess) {
+  self.checkHessian = function (params) {
+    var d ;
+    d = self.diagonal(self.hessian(params));
+    dim = numeric.dim(d);
+    for (var i=0; i<dim[0]; i++){
+      for (var j=0; j<dim[1]; j++) {
+        if (d[i][j] === 0) {
+          self.free[i] = 0;
+        }
+      }
+    }
 
   };
 
@@ -263,8 +280,7 @@ jsfit.fit = function (model, data, initialParams, options) {
     cost_gradient = numeric.dot(jacTrans, self.residuals(params));
     g = numeric.add(jtj, numeric.mul(self.lambda, diag));
     self.debugLog("##### ITERATION " + self.iterationNumber + " #####")
-    self.debugLog("fjac", jac)
-    self.debugLog("jacTrans:", jacTrans)
+    self.debugLog("jac:", jac)
     self.debugLog("jtj:", jtj)
     self.debugLog("g:", g)
     gdim = numeric.dim(g)
@@ -276,6 +292,7 @@ jsfit.fit = function (model, data, initialParams, options) {
         g[i][i] = self.epsilon;
       }
     }
+
     delta = numeric.dot(numeric.inv(g), cost_gradient);
     // console.log(delta);
 
@@ -293,16 +310,6 @@ jsfit.fit = function (model, data, initialParams, options) {
     return newParams;
   };
 
-  self.checkJacobian = function (jtrans) {
-    var sum;
-    for (var i=0;i<jtrans.length;i++) {
-      sum = numeric.sum(jtrans[i]);
-      self.debugLog("sum", sum)
-      if (sum === 0.0) {
-        return false;
-      }
-    }
-  };
 
   //perform the minimization iteratively  
   self.iterate = function (params) {
@@ -310,12 +317,11 @@ jsfit.fit = function (model, data, initialParams, options) {
 
     fjac = self.jacobian(params);
     jacTrans = numeric.transpose(fjac);
-    self.checkJacobian(jacTrans)
     self.debugLog("iterate jacTrans:", jacTrans);
 
     cost = 0.5 * self.ssr(params);
     newParams = self.lmStep(params, fjac);
-    //fix and params that are fixed or limited
+    //fix the params that are fixed or limited
     newParams = self.fixParameters(newParams);
     newCost = 0.5 * self.ssr(newParams);
     // console.log(cost, newCost, params, newParams)
@@ -326,12 +332,12 @@ jsfit.fit = function (model, data, initialParams, options) {
     self.debugLog("iterate cost, newCost:", cost, newCost);
     //this is the inner loop, where we keep increasing the damping parameter if
     //the cost is greater
-    while ((newCost > cost) && (!self.checkJacobian(jacTrans))) {
+    while (newCost > cost) {
       self.lambda *= self.lambdaPlus;
       newParams = self.lmStep(params, fjac);
       newCost = 0.5 * self.ssr(newParams);
     }
-    
+    self.checkHessian(newParams);
     return newParams;
   };
 
@@ -383,7 +389,7 @@ jsfit.fit = function (model, data, initialParams, options) {
               "params": self.params,
               "parameterErrors": self.parameterErrors(),
               "parInfo": self.fitterOptions.parInfo,
-              "hessian": self.hessian(),
+              "hessian": self.hessian(self.params),
               "jac": self.jacobian(self.params),
               "covar": self.covar(),
               "chi2": self.chi2(self.params), 
@@ -396,7 +402,8 @@ jsfit.fit = function (model, data, initialParams, options) {
               "yvals": self.yvals,
               "residuals": self.residuals(self.params),
               "numJac": self.numJac, 
-              "time": new Date() - t1
+              "time": new Date() - t1, 
+              "warnings": self.warnings
            };
   };
 
@@ -507,6 +514,7 @@ jsfit.fit = function (model, data, initialParams, options) {
       self.dof = self.nvals - self.nfree;
     }
     self.ifree = self.where(self.free, 1);
+    console.log(self.ifree)
   };
 
   self.init();
