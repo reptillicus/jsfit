@@ -45,6 +45,17 @@ jsfit.models = {
         mu = params[2],
         sig = params[3];
     return C + A*Math.exp(-(Math.pow(x - mu, 2))/(2 * Math.pow(sig, 2)));
+  },
+
+  rosenbrock: function (X, params) {
+    /* 
+      f(x,y)=(1-x)^2+100(y-x^2)^2 
+      Has a global minimum at (1, 1)
+    */
+
+    var x = params[0],
+        y = params[1];
+    return Math.pow((1 - x), 2) + 100* Math.pow((y - Math.pow(x, 2)), 2);
   }
 
 };
@@ -116,7 +127,7 @@ jsfit.fit = function (model, data, initialParams, options) {
     jac = self.jacobian(params);
     jacTrans = numeric.transpose(jac);
     hes = numeric.mul(2.0, numeric.dot(jacTrans, jac));
-    console.log("hes", hes)
+    self.debugLog("hes", hes);
     return hes;
   };
 
@@ -135,7 +146,11 @@ jsfit.fit = function (model, data, initialParams, options) {
 
     var hes, covar;
     hes = self.hessian(params);
-    covar = numeric.inv(hes);
+    if (numeric.sum(hes) !== 0.0) {
+      covar = numeric.inv(hes);
+    } else {
+      covar = numeric.rep(hes, 0.0);
+    }
     if (!self.weightedFit) covar = numeric.mul(covar, self.totalError());
     return covar;
   };
@@ -145,8 +160,10 @@ jsfit.fit = function (model, data, initialParams, options) {
     var covar, 
         parameterErrors, 
         out = numeric.rep([self.npars], 0.0);
-    covar = self.covar();
+    covar = self.covar(self.params);
     parameterErrors = numeric.sqrt(numeric.getDiag(covar));
+    self.debugLog("parameterErrors", parameterErrors);
+    self.debugLog("parameterErrors", self.free);
     //Patch in the fixed parameters. . . 
     for (var i=0, counter=0; i<self.free.length; i++) {
       if (self.free[i]) {
@@ -251,19 +268,19 @@ jsfit.fit = function (model, data, initialParams, options) {
   };
 
 
-  self.checkHessian = function (params) {
-    var d ;
-    d = self.diagonal(self.hessian(params));
-    dim = numeric.dim(d);
-    for (var i=0; i<dim[0]; i++){
-      for (var j=0; j<dim[1]; j++) {
-        if (d[i][j] === 0) {
-          self.free[i] = 0;
-        }
-      }
-    }
+  // self.checkHessian = function (params) {
+  //   var d ;
+  //   d = self.diagonal(self.hessian(params));
+  //   dim = numeric.dim(d);
+  //   for (var i=0; i<dim[0]; i++){
+  //     for (var j=0; j<dim[1]; j++) {
+  //       if (d[i][j] === 0) {
+  //         self.free[i] = 0;
+  //       }
+  //     }
+  //   }
 
-  };
+  // };
 
   self.lmStep = function (params, jac) {
     var newParams, 
@@ -279,11 +296,11 @@ jsfit.fit = function (model, data, initialParams, options) {
     diag = self.diagonal(jtj);
     cost_gradient = numeric.dot(jacTrans, self.residuals(params));
     g = numeric.add(jtj, numeric.mul(self.lambda, diag));
-    self.debugLog("##### ITERATION " + self.iterationNumber + " #####")
-    self.debugLog("jac:", jac)
-    self.debugLog("jtj:", jtj)
-    self.debugLog("g:", g)
-    gdim = numeric.dim(g)
+    self.debugLog("##### ITERATION " + self.iterationNumber + " #####");
+    self.debugLog("jac:", jac);
+    self.debugLog("jtj:", jtj);
+    self.debugLog("g:", g);
+    gdim = numeric.dim(g);
 
     //TODO: QR factorization? this just sets any zero elements in the 
     // diagonals to be small but non-zero
@@ -337,7 +354,7 @@ jsfit.fit = function (model, data, initialParams, options) {
       newParams = self.lmStep(params, fjac);
       newCost = 0.5 * self.ssr(newParams);
     }
-    self.checkHessian(newParams);
+    //self.checkHessian(newParams);
     return newParams;
   };
 
@@ -391,7 +408,7 @@ jsfit.fit = function (model, data, initialParams, options) {
               "parInfo": self.fitterOptions.parInfo,
               "hessian": self.hessian(self.params),
               "jac": self.jacobian(self.params),
-              "covar": self.covar(),
+              "covar": self.covar(self.params),
               "chi2": self.chi2(self.params), 
               "chi2red": self.chi2(self.params)/self.dof,
               "dof": self.dof, 
@@ -413,13 +430,13 @@ jsfit.fit = function (model, data, initialParams, options) {
     self.epsilon = numeric.epsilon*100;
     //store the x values on self
     self.xvals = data[0];
-    if (toType(self.yvals) !== 'float32array') {
-      var tx = new Float32Array(self.xvals.length);
-      for (var i=0;i<self.xvals.length;i++){
-        tx[i] = self.xvals[i];
-      }
-      self.xvals = tx;
-    }
+    // if (toType(self.yvals) !== 'float32array') {
+    //   var tx = new Float32Array(self.xvals.length);
+    //   for (var i=0;i<self.xvals.length;i++){
+    //     tx[i] = self.xvals[i];
+    //   }
+    //   self.xvals = tx;
+    // }
     //store the y values on self
     self.yvals = data[1];
     if (toType(self.yvals) !== 'float32array') {
@@ -479,7 +496,7 @@ jsfit.fit = function (model, data, initialParams, options) {
       debug: false,
       ftol :1e-10, 
       chart: false,
-      paramDeltaConverge: 0.001,
+      paramDeltaConverge: 0.0001,
     };
 
     if (self.xvals.length !== self.yvals.length) {
@@ -514,7 +531,6 @@ jsfit.fit = function (model, data, initialParams, options) {
       self.dof = self.nvals - self.nfree;
     }
     self.ifree = self.where(self.free, 1);
-    console.log(self.ifree)
   };
 
   self.init();

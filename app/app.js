@@ -40,6 +40,11 @@ app.config(function($stateProvider, $urlRouterProvider) {
         templateUrl: "app/views/interactive.html", 
         controller: 'interactiveCtrl'
       })
+      .state('examples.other', {
+        url: '/5', 
+        templateUrl: "app/views/other.html", 
+        controller: 'otherExamplesCtrl'
+      })
     .state('readme',  {
       'url': '/readme', 
       templateUrl: 'app/views/readme.html'

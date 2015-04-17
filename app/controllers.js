@@ -1,8 +1,10 @@
 app.controller('linearExCtrl', function($scope) {
-  p0 = [10.0, 10.0];
-  xvals = [1,2,3,4,5];
-  yvals = [1,2,3,4,5];
-
+  p0 = [3.00, 10.0];
+  var npoints = 300;
+  xvals = numeric.linspace(0,10, npoints);
+  clean = xvals.map(function(d, i){return jsfit.models.linear(d, p0);});
+  noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.2), 0.1), 1.0);
+  yvals = numeric.mul(clean, noise);
   // console.log(weights)
   $scope.data = [ 
            xvals, 
@@ -11,12 +13,12 @@ app.controller('linearExCtrl', function($scope) {
   $scope.xvals = $scope.data[0];
   $scope.yvals = $scope.data[1];
 
-  $scope.p0 = [ {value:2.0}, {value:10.0}];
+  $scope.p0 = [ {value:1.0}, {value:1.0}];
   $scope.parInfo = [{'name': 'm', 'fixed':false}, {'name': 'b', 'fixed':false}];
 
   $scope.fit = function() {
     var par0 = $scope.p0.map(function(p) {return p.value;});
-    var opts = {'debug': true, parInfo: $scope.parInfo };
+    var opts = {'debug': false, parInfo: $scope.parInfo };
     $scope.fitobj = jsfit.fit(jsfit.models.linear, $scope.data, par0, opts);
     createChart({"data":generatePointsData($scope.data, jsfit.models.linear, par0, $scope.fitobj.params), element:"#chart2"});
   };
@@ -29,7 +31,6 @@ app.controller('example1Ctrl', function($scope) {
   p0 = [10.0, 1000.0, 0.5];
   var npoints = 300;
   xvals = numeric.linspace(0,10, npoints);
-  console.log(jsfit.models)
   clean = xvals.map(function(d, i){return jsfit.models.exponential(d, p0);});
   noise = numeric.add(numeric.sub(numeric.mul(numeric.random([npoints]), 0.2), 0.1), 1.0);
   yvals = numeric.mul(clean, noise);
@@ -104,6 +105,32 @@ app.controller('interactiveCtrl', function ($scope) {
            yvals,
            weights
           ];
+
+
+});
+
+
+app.controller('otherExamplesCtrl', function ($scope) {
+  
+  function model (x, params) {
+    r = Math.sqrt( Math.pow((x[0] - params[0]), 2) + 
+                   Math.pow((x[1] - params[1]), 2) 
+                  );
+    return r; 
+  }
+
+  $scope.xvals = [
+            [1, 0],
+            [0, 2], 
+            [3, 4] 
+          ];
+  $scope.yvals = [1, 2, 5];
+  $scope.data = [$scope.xvals, $scope.yvals];
+
+  $scope.par0 = [0.5, 0.5];
+
+  $scope.fitobj  = jsfit.fit(model, $scope.data, $scope.par0, {'debug': true });
+
 
 
 });

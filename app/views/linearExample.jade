@@ -1,4 +1,3 @@
-h3 balls
 .row-fluid
   .col-md-12
     .row-fluid
@@ -11,7 +10,8 @@ h3 balls
             return m*x + b;
           }
       .col-md-6
-        h1(mathjax) 
+        h3 Linear data
+        p We can also fit a linear model of course. 
         
            
   .col-md-12
@@ -34,7 +34,7 @@ h3 balls
       h4 Parameter Errors
     .row-fluid
       form.form-inline(name="chart1FinalParams")
-        .form-group(ng-repeat = "par in fitobj.parameterErrors")
+        .form-group(ng-repeat = "par in fitobj.parameterErrors track by $index")
           label {{parInfo[$index].name}}
           input.form-control(type="number", disabled, ng-model="fitobj.parameterErrors[$index]")
       ul.list-inline

@@ -1,0 +1,26 @@
+.row-fluid
+  .col-md-12
+    .row-fluid
+      .col-md-6
+        h3 Trilateration
+        div(hljs).
+          function model (x, params) {
+            r = Math.sqrt( Math.pow((x[0] - params[0]), 2) + 
+                           Math.pow((x[1] - params[1]), 2) + 
+                          );
+            return r; 
+          }
+
+          xvals = [
+            [1, 0],
+            [0, 2], 
+            [3, 4], 
+          ];
+          yvals = [1, 2, 5];
+          data = [xvals, yvals];
+          //initial guess at parameters
+          par0 = [0.5, 0.5, 0.5];
+
+          fitobj  = jsfit.fit(model, data, par0);
+          console.log(fitobj.params)
+          //returns [0,0]
