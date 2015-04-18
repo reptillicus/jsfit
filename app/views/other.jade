@@ -1,7 +1,7 @@
 .row-fluid
   .col-md-12
-    .row-fluid
-      .col-md-6
+    .row
+      .col-md-12
         h3 Trilateration
         div(hljs).
           function model (x, params) {
@@ -11,16 +11,35 @@
             return r; 
           }
 
-          xvals = [
-            [1, 0],
-            [0, 2], 
-            [3, 4], 
-          ];
-          yvals = [1, 2, 5];
-          data = [xvals, yvals];
-          //initial guess at parameters
-          par0 = [0.5, 0.5, 0.5];
+          yvals = [515.9089066879927 ,
+           272.7673000929547,
+           474.09070862019644,
+           350.202798389733,
+           440.9104217411968,
+           262.60616900598507,
+           51.40038910358559,
+           152.190669884852];
 
-          fitobj  = jsfit.fit(model, data, par0);
-          console.log(fitobj.params)
-          //returns [0,0]
+          xvals = [ [10, 10],
+           [480, 10],
+           [10, 460],
+           [240, 0],
+           [10, 240],
+           [240, 440],
+           [480, 240],
+           [480,430]];
+
+          data = [xvals, yvals];
+
+          // picking good starting parameters is important
+          // guess the mean of the xvals perhaps
+          par0 = [numeric.sum(xvals.map(function(d) {return d[0]})) / xvals.length,
+                  numeric.sum(xvals.map(function(d) {return d[1]})) / xvals.length];
+
+          fitobj  = jsfit.fit(model, data, par0, {'debug': true });
+          console.log(fitobj.params) 
+          [449.0000046618936, 281.0000033291429]
+    //- .row
+    //-   .col-md-12
+    //-     h3 Image analysis
+    //-     canvas(id="viewport")

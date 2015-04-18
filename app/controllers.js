@@ -118,19 +118,37 @@ app.controller('otherExamplesCtrl', function ($scope) {
                   );
     return r; 
   }
+  $scope.yvals = [515.9089066879927 ,
+           272.7673000929547,
+           474.09070862019644,
+           350.202798389733,
+           440.9104217411968,
+           262.60616900598507,
+           51.40038910358559,
+           152.190669884852];
 
-  $scope.xvals = [
-            [1, 0],
-            [0, 2], 
-            [3, 4] 
-          ];
-  $scope.yvals = [1, 2, 5];
+  $scope.xvals = [ [10, 10],
+           [480, 10],
+           [10, 460],
+           [240, 0],
+           [10, 240],
+           [240, 440],
+           [480, 240],
+           [480,430]];
+
   $scope.data = [$scope.xvals, $scope.yvals];
-
-  $scope.par0 = [0.5, 0.5];
-
+  $scope.par0 = [numeric.sum($scope.xvals.map(function(d) {return d[1];})) / $scope.xvals.length, 
+                 numeric.sum($scope.xvals.map(function(d) {return d[1];})) / $scope.xvals.length
+                ];
   $scope.fitobj  = jsfit.fit(model, $scope.data, $scope.par0, {'debug': true });
-
-
+  console.log($scope.fitobj) 
+  // var canvas = document.getElementById('viewport');
+  // console.log(canvas)
+  // var context = canvas.getContext('2d');
+  // var base_image = new Image();
+  // base_image.src = 'app/images/qso.png';
+  // base_image.onload = function(){
+  //   context.drawImage(base_image, 0, 0, base_image.width, base_image.height);
+  // };
 
 });
