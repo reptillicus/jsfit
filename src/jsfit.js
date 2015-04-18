@@ -127,6 +127,14 @@ jsfit.fit = function (model, data, initialParams, options) {
     jac = self.jacobian(params);
     jacTrans = numeric.transpose(jac);
     hes = numeric.mul(2.0, numeric.dot(jacTrans, jac));
+
+    //fixed parameters should have a zero in the hessian
+    // dim = numeric.dim(hes);
+    // for (var i=0; i<dim[0]; i++) {
+    //   if (self.free[i] === 0) {
+    //     hes[i][i] = 0.0;
+    //   }
+    // }
     self.debugLog("hes", hes);
     return hes;
   };
@@ -165,10 +173,11 @@ jsfit.fit = function (model, data, initialParams, options) {
     self.debugLog("parameterErrors", parameterErrors);
     self.debugLog("parameterErrors", self.free);
     //Patch in the fixed parameters. . . 
-    for (var i=0, counter=0; i<self.free.length; i++) {
+    for (var i=0; i<self.params.length; i++) {
       if (self.free[i]) {
-        out[i] = parameterErrors[counter];
-        counter++;
+        out[i] = parameterErrors[i];
+      } else {
+        out[i] = 0.0;
       }
     }
     return out;
@@ -314,10 +323,9 @@ jsfit.fit = function (model, data, initialParams, options) {
     // console.log(delta);
 
     //Patch in the fixed parameters. . . 
-    for (var i=0, counter=0; i<self.free.length; i++) {
+    for (var i=0; i<self.free.length; i++) {
       if (self.free[i]) {
-        allDelta[i] = delta[counter];
-        counter++;
+        allDelta[i] = delta[i];
       }
     }
     
@@ -481,9 +489,9 @@ jsfit.fit = function (model, data, initialParams, options) {
     //the l-m damping parameter
     self.lambda = 0.1;
     //the lambda up paramaeter
-    self.lambdaPlus = 10.0;
+    self.lambdaPlus = 5.0;
     //the lambda decrease parameter
-    self.lambdaMinus = 0.25;
+    self.lambdaMinus = 0.5;
     //stopping reason
     self.stopReason = null;
     //number of jac calcs

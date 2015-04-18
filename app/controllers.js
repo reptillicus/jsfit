@@ -84,6 +84,7 @@ app.controller('example2Ctrl', function($scope) {
   $scope.fit = function() {
     par0 = $scope.p0.map(function(p) {return p.value;});
     $scope.fitobj  = jsfit.fit(jsfit.models.gaussian, $scope.data, par0, {'debug': false, parInfo: $scope.parInfo });
+    console.log($scope.fitobj)
     createChart({"data":generatePointsData($scope.data, jsfit.models.gaussian, par0, $scope.fitobj.params), element:"#chart2", yRange:[0, 150]});
   };
 

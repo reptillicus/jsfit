@@ -60,7 +60,7 @@
     </div>
     <div class="row-fluid">
       <form name="chart1FinalParams" class="form-inline">
-        <div ng-repeat="par in fitobj.parameterErrors" class="form-group">
+        <div ng-repeat="par in fitobj.parameterErrors track by $index" class="form-group">
           <label>{{parInfo[$index].name}}</label>
           <input type="number" disabled="disabled" ng-model="fitobj.parameterErrors[$index]" class="form-control"/>
         </div>

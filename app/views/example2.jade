@@ -44,7 +44,7 @@
       h4 Parameter Errors
     .row-fluid
       form.form-inline(name="chart1FinalParams")
-        .form-group(ng-repeat = "par in fitobj.parameterErrors")
+        .form-group(ng-repeat = "par in fitobj.parameterErrors track by $index")
           label {{parInfo[$index].name}}
           input.form-control(type="number", disabled, ng-model="fitobj.parameterErrors[$index]")
 
