@@ -7,7 +7,7 @@ html
     script.
       hljs.initHighlightingOnLoad();
 
-    script(type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML")
+    script(type="text/javascript" src="https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML")
     script(type="text/x-mathjax-config").
       MathJax.Hub.Config({
         tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
@@ -22,7 +22,7 @@ html
 
       ga('create', 'UA-54703312-1', 'auto');
       ga('send', 'pageview');
- 
+
     script(type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js")
     script(type="text/javascript" src="components/jquery/dist/jquery.min.js")
     script(type="text/javascript" src="components/d3/d3.min.js")
@@ -62,17 +62,17 @@ html
                   a(ui-sref="examples.example1") Linear
                 li
                   a(ui-sref="examples.example2") Exponential
-                li 
+                li
                   a(ui-sref="examples.example3") Gaussian with fixed baseline
-                li 
+                li
                   a(ui-sref="examples.example4") Interactive fitting
-                li 
+                li
                   a(ui-sref="examples.other") Other Examples
             li
               a(ui-sref="readme") Read Me
 
     .container-fluid
       div(ui-view)
-       
+
 
     script(src="http://localhost:35729/livereload.js")
