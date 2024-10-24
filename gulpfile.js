@@ -19,28 +19,23 @@ gulp.task('watch', function () {
 });
 
 
-gulp.task('stylusdev', [], function () {
+gulp.task('stylusdev', function () {
   return gulp.src('./app/**/*.styl')
     .pipe(stylus())
     .pipe(gulp.dest('app'));
 });
 
-gulp.task('jade', ['stylusdev'], function () {
+gulp.task('jade', gulp.series('stylusdev', function () {
   return gulp.src("./app/**/*.jade")
     .pipe(jade({pretty:true, locals: {min: ''}}))
     .pipe(gulp.dest('app'));
-});
+}));
 
-gulp.task('build', ['jade'], function () {
+gulp.task('build', gulp.series('jade', function () {
   return gulp.src("./index.jade")
     .pipe(jade({pretty:true, locals: {min: ''}}))
     .pipe(gulp.dest('.'))
     .pipe(livereload());
-});
-
-// gulp.task('build', ['jade'], function () {
-//   return gulp.src('src/jsfit.js')
-//     .pipe(livereload())
-// });
+}));
 
 
